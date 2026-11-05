@@ -358,3 +358,373 @@ button:disabled {
 .wp-doc .wp-actions {
   flex-wrap: wrap;
 }
+
+/* Tax preparation: task-led layout with a quieter supporting column. */
+.tax-workspace {
+  --tax-ink: #203b40;
+  --tax-muted: #586c6e;
+}
+.tax-workspace h1 {
+  font-size: 28px;
+  letter-spacing: -0.3px;
+}
+.tax-workspace h2,
+.tax-workspace h3 {
+  color: var(--tax-ink);
+  text-wrap: balance;
+}
+.tax-workspace p {
+  text-wrap: pretty;
+}
+.tax-overview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  padding: 24px 28px;
+  background: #edf5f3;
+  border: 1px solid #d5e5df;
+  border-radius: 10px;
+  margin: 28px 0 16px;
+}
+.tax-overview-copy {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  color: #276c64;
+}
+.tax-overview-copy strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.tax-overview-copy p {
+  color: var(--tax-muted);
+  margin-top: 4px;
+  font-size: 13px;
+}
+.tax-overview-progress {
+  width: 230px;
+  flex-shrink: 0;
+}
+.tax-overview-progress span {
+  display: block;
+  color: #46635e;
+  font-size: 13px;
+}
+.tax-overview-progress strong {
+  font-size: 22px;
+  color: #215f57;
+  font-family: Manrope, sans-serif;
+}
+.tax-overview-progress progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  appearance: none;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+  background: #d4e5de;
+}
+.tax-overview-progress progress::-webkit-progress-bar {
+  background: #d4e5de;
+}
+.tax-overview-progress progress::-webkit-progress-value {
+  background: #2c8174;
+  border-radius: 4px;
+}
+.tax-overview-progress progress::-moz-progress-bar {
+  background: #2c8174;
+}
+.tax-overview-progress small {
+  font-size: 11px;
+  color: #526b65;
+}
+.tax-workspace .tax-notice {
+  background: transparent;
+  border: 0;
+  padding: 0 0 24px;
+  color: var(--tax-muted);
+  font-size: 12px;
+  line-height: 1.8;
+  margin-bottom: 8px;
+  align-items: flex-start;
+}
+.tax-notice svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+}
+.tax-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 28px;
+  align-items: start;
+}
+.tax-main,
+.tax-aside {
+  min-width: 0;
+}
+.tax-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.tax-section-heading h2 {
+  font-size: 18px;
+}
+.tax-section-heading > span {
+  font-size: 12px;
+  color: var(--tax-muted);
+}
+.tax-plan > p {
+  font-size: 13px;
+  color: var(--tax-muted);
+  max-width: 70ch;
+  margin-bottom: 24px;
+}
+.tax-stage {
+  background: #fff;
+  border: 1px solid #dfe7e3;
+  border-radius: 10px;
+  margin: 0 0 18px;
+  overflow: hidden;
+}
+.tax-stage-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 24px 0;
+}
+.tax-stage-number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid #cadbd3;
+  border-radius: 7px;
+  font-family: Manrope, sans-serif;
+  font-size: 13px;
+  color: #326c60;
+}
+.tax-stage-heading h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.tax-stage-count {
+  margin-left: auto;
+  font-family: Manrope, sans-serif;
+  font-size: 12px;
+  color: var(--tax-muted);
+  white-space: nowrap;
+}
+.tax-stage > p {
+  margin: 12px 24px 20px;
+  color: var(--tax-muted);
+  font-size: 13px;
+  line-height: 1.85;
+  max-width: 70ch;
+}
+.tax-workspace .tax-checklist {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.tax-checklist label {
+  margin: 0;
+  padding: 15px 24px;
+  gap: 12px;
+  border-top: 1px solid #edf0ee;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1.8;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+.tax-checklist label:hover {
+  background: #f5f9f7;
+}
+.tax-checklist label:has(input:checked) {
+  background: #f4f8f5;
+  color: #47695f;
+}
+.tax-checklist label > span {
+  flex: 1;
+}
+.tax-checklist label > svg {
+  color: #2c7868;
+}
+.tax-workspace .tax-checklist input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+}
+.tax-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.tax-plan > a {
+  color: #3c7167;
+  font-size: 12px;
+  line-height: 1.8;
+  display: inline-block;
+  margin: 2px 0 24px;
+}
+.tax-workspace .tax-situation {
+  padding: 24px;
+  gap: 16px;
+  margin: 0;
+}
+.tax-situation > svg {
+  color: #41766c;
+}
+.tax-situation h2 {
+  font-size: 16px;
+}
+.tax-supporting {
+  font-size: 13px;
+  color: var(--tax-muted);
+  line-height: 1.8;
+}
+.tax-situation .field {
+  font-size: 12px;
+  gap: 8px;
+}
+.tax-situation select {
+  font-size: 13px;
+  padding: 10px;
+  color: var(--tax-ink);
+}
+.tax-situation .wp-tax-result {
+  padding: 16px;
+  font-size: 13px;
+}
+.tax-situation .wp-tax-checks {
+  padding: 12px;
+}
+.tax-resources {
+  padding: 24px 4px;
+  border-bottom: 1px solid #dfe7e3;
+}
+.tax-resources h2,
+.tax-next h3 {
+  font-size: 15px;
+}
+.tax-resources .wp-sources {
+  gap: 0;
+  margin: 12px 0;
+}
+.tax-resources .wp-sources a {
+  padding: 10px 0;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #376d63;
+}
+.tax-resources .muted {
+  font-size: 11px;
+  color: var(--tax-muted);
+  line-height: 1.9;
+}
+.tax-next {
+  padding: 24px 4px;
+}
+.tax-next a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--tax-muted);
+  padding-top: 16px;
+  font-size: 13px;
+}
+.tax-workspace a:hover {
+  color: #185b50;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (max-width: 1180px) {
+  .tax-layout {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 20px;
+  }
+  .tax-stage-heading {
+    padding: 20px 18px 0;
+  }
+  .tax-stage > p {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+  .tax-checklist label {
+    padding: 14px 18px;
+  }
+}
+@media (max-width: 960px) {
+  .tax-layout {
+    grid-template-columns: 1fr;
+  }
+  .tax-aside {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .tax-situation {
+    grid-row: span 2;
+  }
+  .tax-resources,
+  .tax-next {
+    padding-top: 0;
+  }
+}
+@media (max-width: 600px) {
+  .tax-workspace h1 {
+    font-size: 23px;
+  }
+  .tax-overview {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  .tax-overview-progress {
+    width: 100%;
+  }
+  .tax-aside {
+    display: block;
+  }
+  .tax-stage-heading {
+    gap: 9px;
+  }
+  .tax-stage-heading h3 {
+    font-size: 15px;
+  }
+  .tax-section-heading > span {
+    display: none;
+  }
+  .tax-stage-count {
+    font-size: 11px;
+  }
+  .tax-resources {
+    padding-top: 24px;
+  }
+  .tax-next {
+    padding-top: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tax-checklist label {
+    transition: none;
+  }
+}

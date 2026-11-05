@@ -28,6 +28,7 @@ import { Dashboard } from './dashboard';
 import { WorkspacePages } from './workspace-pages';
 const nav = [
   { id: 'dashboard', name: navigationLabels.dashboard, icon: Home },
+  { id: 'tax', name: navigationLabels.tax, icon: Scale },
   { id: 'assets', name: navigationLabels.assets, icon: Layers },
   { id: 'contacts', name: navigationLabels.contacts, icon: Users },
   { id: 'documents', name: navigationLabels.documents, icon: FileText },
@@ -40,7 +41,6 @@ const nav = [
   },
   { id: 'checklist', name: navigationLabels.checklist, icon: ListChecks },
   { id: 'assistant', name: navigationLabels.assistant, icon: Sparkles },
-  { id: 'tax', name: navigationLabels.tax, icon: Scale },
 ];
 export function Workspace({ section }: { section: string }) {
   const router = useRouter();

@@ -25,8 +25,11 @@ import {
   Info,
 } from 'lucide-react';
 import './workspace-pages.css';
+import { InsuranceBuilder } from './insurance-builder';
+import { WillBuilder } from './will-builder';
 import { DocumentPreview } from './pdf-preview';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 type Props = {
   section: string;
@@ -268,7 +271,7 @@ function Page({ section, state, refresh, notify }: Props) {
       ? 'ทรัพย์สินของฉัน'
       : isContact
         ? 'คนสำคัญของฉัน'
-        : 'คำสั่งและความตั้งใจ';
+        : 'พินัยกรรมและความประสงค์';
     const rows = (state[section] || []).filter(
       (x: Row) =>
         (!isAsset || category === 'all' || x.category === category) &&
@@ -285,7 +288,7 @@ function Page({ section, state, refresh, notify }: Props) {
               ? 'รวบรวมข้อมูลสำคัญไว้ในที่เดียว เพื่อวันที่คนข้างหลังต้องใช้'
               : isContact
                 ? 'คนที่คุณไว้วางใจ และคนที่คุณอยากดูแล'
-                : 'ส่งต่อสิ่งที่คุณอยากให้คนที่รักได้รับรู้'
+                : 'เขียนพินัยกรรม จัดสรรทรัพย์สิน และบอกความประสงค์ให้คนที่รัก'
           }
         >
           <button className="btn btn-primary" onClick={() => setEditing({})}>
@@ -303,6 +306,19 @@ function Page({ section, state, refresh, notify }: Props) {
             </span>
           </div>
         )}
+        {section === 'instructions' && (
+          <WillBuilder
+            notify={notify}
+            save={(content) =>
+              mutate('instructions', 'POST', {
+                title: 'พินัยกรรมฉบับร่าง',
+                category: 'will',
+                content,
+                status: 'draft',
+              })
+            }
+          />
+        )}
         {isContact && (
           <div className="notice">
             <Info size={18} />
@@ -313,6 +329,9 @@ function Page({ section, state, refresh, notify }: Props) {
               และการบันทึกชื่อผู้จัดการมรดกไม่ได้เป็นการแต่งตั้งตามกฎหมาย
             </span>
           </div>
+        )}
+        {isAsset && (
+          <InsuranceBuilder save={(data) => mutate('assets', 'POST', data)} />
         )}
         {isAsset && (
           <div className="wp-summary panel">
@@ -1383,148 +1402,310 @@ function Tax({ userId }: { userId: string }) {
     }
   };
 
+  const primaryKeys = [
+    'death-income',
+    'tax-credit',
+    'filing',
+    'estate-income',
+    'estate-id',
+    'estate-return',
+    'recipient',
+    'policy',
+    'inheritance-return',
+  ];
+  const completed = primaryKeys.filter((key) => checked[key]).length;
   return (
-    <>
+    <div className="tax-workspace">
       <Heading
-        title="เตรียมเรื่องภาษี"
-        description="สำรวจประเด็นเบื้องต้น เพื่อเตรียมคำถามและเอกสารก่อนปรึกษาผู้เชี่ยวชาญ"
+        title="จัดการภาษีของเจ้ามรดก"
+        description="แยกภาษีในปีที่เสียชีวิต ภาษีของกองมรดกที่ยังไม่ได้แบ่ง และภาษีของผู้รับมรดก พร้อมติดตามเอกสารที่ต้องเตรียม"
       />
-      <div className="notice">
+      <div className="tax-overview">
+        <div className="tax-overview-copy">
+          <ShieldCheck size={22} />
+          <div>
+            <strong>ความพร้อมด้านเอกสารภาษี</strong>
+            <p>ค่อย ๆ เตรียมข้อมูลให้ครบ ก่อนตรวจสอบและยื่นแบบ</p>
+          </div>
+        </div>
+        <div className="tax-overview-progress">
+          <span>
+            <strong>{completed}</strong> / 9 รายการ
+          </span>
+          <progress
+            aria-label="ความพร้อมด้านเอกสารภาษี"
+            value={completed}
+            max={9}
+          />
+          <small>บันทึกความคืบหน้าในอุปกรณ์นี้</small>
+        </div>
+      </div>
+      <div className="notice tax-notice">
         <Info size={20} />
         <span>
           คำแนะนำทั่วไป ไม่ใช่การคำนวณภาษีหรือการวินิจฉัยหน้าที่ภาษี
           ตรวจสอบเงื่อนไขที่ใช้กับคุณกับกรมสรรพากรหรือผู้เชี่ยวชาญ
         </span>
       </div>
-      <div className="panel stack">
-        <h2>เรื่องใดใกล้กับสถานการณ์ของคุณ?</h2>
-        <label className="field">
-          เลือกสถานการณ์
-          <select
-            value={answer}
-            onChange={(e) => {
-              setAnswer(e.target.value);
-              saveTax(e.target.value, estate, checked);
-            }}
-          >
-            <option value="">เลือกสถานการณ์</option>
-            <option value="planning">กำลังวางแผนส่งต่อทรัพย์สิน</option>
-            <option value="inherited">ได้รับทรัพย์สินมรดก</option>
-            <option value="admin">กำลังดูแลทรัพย์สินของผู้เสียชีวิต</option>
-          </select>
-        </label>
-        {answer && (
-          <label className="field">
-            ทรัพย์สินที่เกี่ยวข้อง
-            <select
-              value={estate}
-              onChange={(e) => {
-                setEstate(e.target.value);
-                saveTax(answer, e.target.value, checked);
-              }}
-            >
-              <option value="">เลือกประเภททรัพย์สิน</option>
-              <option value="property">ที่ดินหรืออสังหาริมทรัพย์</option>
-              <option value="financial">
-                เงินฝาก หลักทรัพย์ หรือเงินลงทุน
-              </option>
-              <option value="mixed">หลายประเภท / ยังไม่แน่ใจ</option>
-            </select>
-          </label>
-        )}
-        {answer && estate && (
-          <div className="wp-tax-result">
-            <fieldset className="wp-tax-checks">
-              <legend>รายการเตรียมตัวของคุณ (บันทึกในอุปกรณ์นี้)</legend>
-              {[
-                ['inventory', 'รวบรวมรายการทรัพย์สินและหลักฐานมูลค่า'],
-                ['identity', 'เตรียมหลักฐานความสัมพันธ์และตัวตน'],
-                [
-                  answer === 'admin' ? 'income' : 'transfer',
-                  answer === 'admin'
-                    ? 'รวบรวมรายได้และเอกสารกองมรดก'
-                    : 'รวบรวมเอกสารการได้มาและการส่งต่อ',
-                ],
-                ['consult', 'นัดตรวจสอบหน้าที่ภาษีกับผู้เชี่ยวชาญ'],
-              ].map(([key, label]) => (
-                <label key={key}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(checked[key])}
-                    onChange={(e) => {
-                      const next = { ...checked, [key]: e.target.checked };
-                      setChecked(next);
-                      saveTax(answer, estate, next);
-                    }}
-                  />
-                  {label}
-                </label>
-              ))}
-            </fieldset>
-            <p className="muted">
-              กำหนดเวลาอ้างอิง: ยังไม่ได้ยืนยัน —
-              ต้องตรวจสอบตามกรณีกับหน่วยงานก่อนดำเนินการ
-            </p>
-            <div className="icon-box">
-              <Landmark />
+      <div className="tax-layout">
+        <div className="tax-main">
+          <section className="tax-plan">
+            <div className="tax-section-heading">
+              <h2>แผนจัดการภาษี 3 ส่วน</h2>
+              <span>รายการเตรียมเอกสาร</span>
             </div>
-            <h3>
-              {answer === 'planning'
-                ? 'เริ่มจากบัญชีทรัพย์สินและวิธีการส่งต่อ'
-                : answer === 'inherited'
-                  ? 'ตรวจสอบหน้าที่ภาษีการรับมรดก'
-                  : 'รวบรวมข้อมูลรายได้และหน้าที่ของกองมรดก'}
-            </h3>
             <p>
-              {answer === 'planning'
-                ? 'รวบรวมเจ้าของกรรมสิทธิ์ มูลค่าโดยประมาณ ผู้รับ และหลักฐานการได้มา การให้ระหว่างมีชีวิตและการรับมรดกอาจมีหลักเกณฑ์ต่างกัน'
-                : answer === 'inherited'
-                  ? 'รวบรวมรายการทรัพย์สินที่ได้รับ หลักฐานมูลค่า ความสัมพันธ์กับเจ้ามรดก และวันที่ได้รับ เพื่อให้ผู้เชี่ยวชาญตรวจสอบข้อยกเว้นและหน้าที่ของผู้รับแต่ละราย'
-                  : 'รวบรวมรายได้ก่อนและหลังการเสียชีวิต หลักฐานค่าใช้จ่าย และเอกสารแต่งตั้งผู้จัดการมรดก เพื่อสอบถามหน้าที่ยื่นแบบที่เกี่ยวข้อง'}
+              อย่าใช้ยอดทรัพย์สินรวมแทนรายได้ที่ต้องยื่นภาษี
+              แยกผู้มีหน้าที่และปีภาษีก่อนรวบรวมเอกสาร
             </p>
-            <p>
-              {estate === 'property'
-                ? 'สำหรับอสังหาริมทรัพย์ เตรียมโฉนด ราคาประเมิน และข้อมูลการจดทะเบียนไว้ด้วย'
-                : 'เตรียมรายการบัญชี รายการหลักทรัพย์ และหลักฐานยอด ณ วันที่เกี่ยวข้อง'}
+            {[
+              [
+                'ปีที่เจ้ามรดกเสียชีวิต',
+                'ตรวจรายได้ของผู้ตายและกองมรดกตลอดปีที่เสียชีวิต ผู้จัดการมรดก ทายาท หรือผู้ครอบครองทรัพย์มรดกมีหน้าที่ดำเนินการแทนตามกรณี',
+                [
+                  [
+                    'death-income',
+                    'รวบรวมเงินเดือน ค่าเช่า ดอกเบี้ย และรายได้อื่นตลอดปีที่เสียชีวิต',
+                  ],
+                  [
+                    'tax-credit',
+                    'รวบรวมหนังสือรับรองหักภาษี ณ ที่จ่าย แบบเดิม และหลักฐานลดหย่อน',
+                  ],
+                  [
+                    'filing',
+                    'ยืนยันผู้ยื่นแทน แบบภาษี และวันครบกำหนดกับสรรพากร',
+                  ],
+                ],
+              ],
+              [
+                'กองมรดกที่ยังไม่ได้แบ่งในปีถัดไป',
+                'หากทรัพย์สินยังไม่ได้แบ่งและก่อให้เกิดเงินได้ ต้องตรวจหน้าที่ของกองมรดกแยกจากปีที่เสียชีวิต',
+                [
+                  [
+                    'estate-income',
+                    'แยกรายได้ ค่าใช้จ่าย และภาษีหัก ณ ที่จ่ายของกองมรดกตามปี',
+                  ],
+                  [
+                    'estate-id',
+                    'ตรวจเลขประจำตัวผู้เสียภาษีและผู้มีหน้าที่ดำเนินการแทน',
+                  ],
+                  [
+                    'estate-return',
+                    'ยืนยันแบบและกำหนดเวลายื่นของกองมรดกแต่ละปี',
+                  ],
+                ],
+              ],
+              [
+                'ภาษีการรับมรดกของผู้รับแต่ละคน',
+                'ตรวจประเภททรัพย์สิน มูลค่าที่ได้รับ ความสัมพันธ์ และข้อยกเว้นของผู้รับแต่ละราย แยกจากภาษีเงินได้ของเจ้ามรดก',
+                [
+                  [
+                    'recipient',
+                    'ทำรายการทรัพย์สิน มูลค่า และวันที่ได้รับ แยกตามผู้รับ',
+                  ],
+                  [
+                    'policy',
+                    'แยกเงินตามกรมธรรม์ ผู้รับประโยชน์ และเอกสารบริษัทประกันเพื่อให้ตรวจสถานะภาษี',
+                  ],
+                  [
+                    'inheritance-return',
+                    'ตรวจข้อยกเว้นและหน้าที่ยื่นภาษีการรับมรดกกับผู้เชี่ยวชาญ',
+                  ],
+                ],
+              ],
+            ].map(([title, description, tasks], index) => (
+              <section className="tax-stage" key={String(title)}>
+                <div className="tax-stage-heading">
+                  <span className="tax-stage-number">{index + 1}</span>
+                  <h3>{String(title)}</h3>
+                  <span className="tax-stage-count">
+                    {
+                      (tasks as string[][]).filter(([key]) => checked[key])
+                        .length
+                    }{' '}
+                    / 3
+                  </span>
+                </div>
+                <p>{String(description)}</p>
+                <fieldset className="wp-tax-checks tax-checklist">
+                  <legend className="tax-sr-only">
+                    {String(title)} — รายการเตรียมเอกสาร
+                  </legend>
+                  {(tasks as string[][]).map(([key, label]) => (
+                    <label key={key}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(checked[key])}
+                        onChange={(e) => {
+                          const next = { ...checked, [key]: e.target.checked };
+                          setChecked(next);
+                          saveTax(answer, estate, next);
+                        }}
+                      />
+                      <span>{label}</span>
+                      {checked[key] && <Check size={16} aria-hidden="true" />}
+                    </label>
+                  ))}
+                </fieldset>
+              </section>
+            ))}
+            <a
+              href="https://www.rd.go.th/5937.html"
+              target="_blank"
+              rel="noreferrer"
+            >
+              ประมวลรัษฎากร มาตรา 57 ทวิ — หน้าที่เกี่ยวกับผู้ตายและกองมรดก
+            </a>
+          </section>
+        </div>
+        <aside className="tax-aside">
+          <div className="panel stack tax-situation">
+            <FileText size={22} aria-hidden="true" />
+            <h2>เตรียมเอกสารตามสถานการณ์เพิ่มเติม</h2>
+            <p className="tax-supporting">
+              เลือกข้อมูลที่ตรงกับคุณ เพื่อดูสิ่งที่ควรรวบรวมเพิ่มเติม
             </p>
-            <strong>ขั้นตอนถัดไป</strong>
-            <p>
-              นำข้อมูลไปตรวจสอบกับกรมสรรพากรหรือที่ปรึกษาภาษี
-              ก่อนตัดสินใจและดำเนินการ
+            <label className="field">
+              เลือกสถานการณ์
+              <select
+                value={answer}
+                onChange={(e) => {
+                  setAnswer(e.target.value);
+                  saveTax(e.target.value, estate, checked);
+                }}
+              >
+                <option value="">เลือกสถานการณ์</option>
+                <option value="planning">กำลังวางแผนส่งต่อทรัพย์สิน</option>
+                <option value="inherited">ได้รับทรัพย์สินมรดก</option>
+                <option value="admin">กำลังดูแลทรัพย์สินของผู้เสียชีวิต</option>
+              </select>
+            </label>
+            {answer && (
+              <label className="field">
+                ทรัพย์สินที่เกี่ยวข้อง
+                <select
+                  value={estate}
+                  onChange={(e) => {
+                    setEstate(e.target.value);
+                    saveTax(answer, e.target.value, checked);
+                  }}
+                >
+                  <option value="">เลือกประเภททรัพย์สิน</option>
+                  <option value="property">ที่ดินหรืออสังหาริมทรัพย์</option>
+                  <option value="financial">
+                    เงินฝาก หลักทรัพย์ หรือเงินลงทุน
+                  </option>
+                  <option value="mixed">หลายประเภท / ยังไม่แน่ใจ</option>
+                </select>
+              </label>
+            )}
+            {answer && estate && (
+              <div className="wp-tax-result">
+                <fieldset className="wp-tax-checks">
+                  <legend>รายการเตรียมตัวของคุณ (บันทึกในอุปกรณ์นี้)</legend>
+                  {[
+                    ['inventory', 'รวบรวมรายการทรัพย์สินและหลักฐานมูลค่า'],
+                    ['identity', 'เตรียมหลักฐานความสัมพันธ์และตัวตน'],
+                    [
+                      answer === 'admin' ? 'income' : 'transfer',
+                      answer === 'admin'
+                        ? 'รวบรวมรายได้และเอกสารกองมรดก'
+                        : 'รวบรวมเอกสารการได้มาและการส่งต่อ',
+                    ],
+                    ['consult', 'นัดตรวจสอบหน้าที่ภาษีกับผู้เชี่ยวชาญ'],
+                  ].map(([key, label]) => (
+                    <label key={key}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(checked[key])}
+                        onChange={(e) => {
+                          const next = { ...checked, [key]: e.target.checked };
+                          setChecked(next);
+                          saveTax(answer, estate, next);
+                        }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </fieldset>
+                <p className="muted">
+                  กำหนดเวลาอ้างอิง: ยังไม่ได้ยืนยัน —
+                  ต้องตรวจสอบตามกรณีกับหน่วยงานก่อนดำเนินการ
+                </p>
+                <div className="icon-box">
+                  <Landmark />
+                </div>
+                <h3>
+                  {answer === 'planning'
+                    ? 'เริ่มจากบัญชีทรัพย์สินและวิธีการส่งต่อ'
+                    : answer === 'inherited'
+                      ? 'ตรวจสอบหน้าที่ภาษีการรับมรดก'
+                      : 'รวบรวมข้อมูลรายได้และหน้าที่ของกองมรดก'}
+                </h3>
+                <p>
+                  {answer === 'planning'
+                    ? 'รวบรวมเจ้าของกรรมสิทธิ์ มูลค่าโดยประมาณ ผู้รับ และหลักฐานการได้มา การให้ระหว่างมีชีวิตและการรับมรดกอาจมีหลักเกณฑ์ต่างกัน'
+                    : answer === 'inherited'
+                      ? 'รวบรวมรายการทรัพย์สินที่ได้รับ หลักฐานมูลค่า ความสัมพันธ์กับเจ้ามรดก และวันที่ได้รับ เพื่อให้ผู้เชี่ยวชาญตรวจสอบข้อยกเว้นและหน้าที่ของผู้รับแต่ละราย'
+                      : 'รวบรวมรายได้ก่อนและหลังการเสียชีวิต หลักฐานค่าใช้จ่าย และเอกสารแต่งตั้งผู้จัดการมรดก เพื่อสอบถามหน้าที่ยื่นแบบที่เกี่ยวข้อง'}
+                </p>
+                <p>
+                  {estate === 'property'
+                    ? 'สำหรับอสังหาริมทรัพย์ เตรียมโฉนด ราคาประเมิน และข้อมูลการจดทะเบียนไว้ด้วย'
+                    : 'เตรียมรายการบัญชี รายการหลักทรัพย์ และหลักฐานยอด ณ วันที่เกี่ยวข้อง'}
+                </p>
+                <strong>ขั้นตอนถัดไป</strong>
+                <p>
+                  นำข้อมูลไปตรวจสอบกับกรมสรรพากรหรือที่ปรึกษาภาษี
+                  ก่อนตัดสินใจและดำเนินการ
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="tax-resources">
+            <h2>แหล่งข้อมูลทางการ</h2>
+            <div className="wp-sources">
+              <a
+                href="https://www.rd.go.th/548.html"
+                target="_blank"
+                rel="noreferrer"
+              >
+                ภาษีเงินได้บุคคลธรรมดา <ArrowUpRight size={17} />
+              </a>
+              <a
+                href="https://www.rd.go.th/56657.html"
+                target="_blank"
+                rel="noreferrer"
+              >
+                ข้อมูลภาษีการรับมรดก <ArrowUpRight size={17} />
+              </a>
+              <a
+                href="https://www.rd.go.th/61303.html"
+                target="_blank"
+                rel="noreferrer"
+              >
+                ข้อมูลกรมสรรพากรเพิ่มเติม <ArrowUpRight size={17} />
+              </a>
+            </div>
+            <p className="muted">
+              ทบทวนแหล่งข้อมูล ณ วันที่ 5 พฤศจิกายน 2569 ·
+              โปรดยืนยันหลักเกณฑ์ล่าสุดและการใช้กับกรณีของคุณ
             </p>
           </div>
-        )}
+          <div className="tax-next">
+            <h3>จัดข้อมูลที่เกี่ยวข้องให้พร้อม</h3>
+            <Link href="/app/assets">
+              รวบรวมกรมธรรม์และทรัพย์สิน <ArrowUpRight size={16} />
+            </Link>
+            <Link href="/app/documents">
+              จัดเก็บหลักฐานภาษี <ArrowUpRight size={16} />
+            </Link>
+            <Link href="/app/instructions">
+              เขียนพินัยกรรม <ArrowUpRight size={16} />
+            </Link>
+          </div>
+        </aside>
       </div>
-      <div className="panel wp-settings-section">
-        <h2>แหล่งข้อมูลทางการ</h2>
-        <div className="wp-sources">
-          <a
-            href="https://www.rd.go.th/548.html"
-            target="_blank"
-            rel="noreferrer"
-          >
-            ภาษีเงินได้บุคคลธรรมดา <ArrowUpRight size={17} />
-          </a>
-          <a
-            href="https://www.rd.go.th/56657.html"
-            target="_blank"
-            rel="noreferrer"
-          >
-            ข้อมูลภาษีการรับมรดก <ArrowUpRight size={17} />
-          </a>
-          <a
-            href="https://www.rd.go.th/61303.html"
-            target="_blank"
-            rel="noreferrer"
-          >
-            ข้อมูลกรมสรรพากรเพิ่มเติม <ArrowUpRight size={17} />
-          </a>
-        </div>
-        <p className="muted">
-          ทบทวนแหล่งข้อมูล ณ วันที่ 5 พฤศจิกายน 2569 ·
-          โปรดยืนยันหลักเกณฑ์ล่าสุดและการใช้กับกรณีของคุณ
-        </p>
-      </div>
-    </>
+    </div>
   );
 }

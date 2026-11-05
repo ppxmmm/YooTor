@@ -7,11 +7,11 @@ export const messages = {
       assets: 'ทรัพย์สินของฉัน',
       contacts: 'บุคคลที่ไว้วางใจ',
       documents: 'คลังเอกสาร',
-      instructions: 'บันทึกความประสงค์',
+      instructions: 'พินัยกรรมและความประสงค์',
       family: 'พื้นที่สำหรับครอบครัว',
       checklist: 'รายการดำเนินการ',
       assistant: 'ผู้ช่วย AI',
-      tax: 'แนวทางภาษี',
+      tax: 'ภาษีเจ้ามรดก',
     },
   },
   en: {
