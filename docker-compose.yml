@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: yootor
+      POSTGRES_PASSWORD: yootor_local
+      POSTGRES_DB: yootor
+    ports:
+      - "127.0.0.1:55439:5432"
+    volumes:
+      - yootor_postgres:/var/lib/postgresql/data
+volumes:
+  yootor_postgres:

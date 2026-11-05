@@ -1,0 +1,86 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "postgresql"
+ url = env("DATABASE_URL")
+}
+// Personal details and resource payloads use AES-256-GCM. Only relational
+// identifiers, resource kinds, and session expiration are stored in clear.
+model Household {
+ id String @id
+ ciphertext String @db.Text
+ users User[]
+ assets Asset[]
+ contacts Contact[]
+ documents Document[]
+ instructions Instruction[]
+ requests AccessRequest[]
+ tasks ChecklistTask[]
+ activities AuditActivity[]
+}
+model User {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ sessions Session[]
+ @@index([householdId])
+}
+model Session {
+ hash String @id
+ userId String
+ user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ expires DateTime
+ @@index([userId])
+ @@index([expires])
+}
+model Asset {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ @@index([householdId])
+}
+model Contact {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ @@index([householdId])
+}
+model Document {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ @@index([householdId])
+}
+model Instruction {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ @@index([householdId])
+}
+model AccessRequest {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ @@index([householdId])
+}
+model ChecklistTask {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ @@index([householdId])
+}
+model AuditActivity {
+ id String @id
+ householdId String
+ household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+ ciphertext String @db.Text
+ @@index([householdId])
+}
