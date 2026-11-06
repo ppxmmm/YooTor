@@ -13,3 +13,19 @@ Primary dashboard: five-category readiness ring, botanical care panel, three mea
 Initial concept brief (built-in Image Gen): “Full desktop Thai family legacy dashboard; navy240px sidebar, off-white background, teal accents, Thai readable typography, readiness panel with five lines, botanical care panel, asset/document/contact totals, actual-asset table, next actions and activity; no gradients or decorative growth charts.”
 
 Localization foundation: `src/i18n/messages.ts` contains Thai and English brand/navigation dictionaries and an explicit default locale. Full page-copy translation and locale selection are future work; no nonfunctional language toggle is shown.
+
+## Botanical realism refresh
+
+The shared `TreeArt` now uses `public/images/yootor-tree-realistic.png` through
+Next Image for responsive optimization. The original brand mark and UI content
+remain unchanged. Landing, dashboard care card, and auth panels share the artwork.
+The landing note sits above the canopy; dashboard copy stays to its left.
+
+Generated with built-in ImageGen (transparent background). Final asset prompt:
+“Photorealistic graceful young broad-canopied tree, full tree visible, natural
+asymmetric branching, textured brown bark, sage and olive leaves, warm morning
+studio light, small grass patch at roots, transparent background; quiet family
+legacy mood; no text, UI, pot, floating island, cartoon, or landscape.”
+
+Verified landing and dashboard care card at 1440px and 390px in Chrome. Dashboard
+visual verification used browser-only synthetic state, without database writes.
