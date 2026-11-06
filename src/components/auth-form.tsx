@@ -113,7 +113,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
     <div className="auth-page">
       <aside className="auth-story">
         <Link href="/">
-          <Brand light />
+          <Brand />
         </Link>
         <div className="auth-story-copy">
           <span className="auth-heart">
@@ -157,29 +157,6 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               <span className={step === 1 ? 'selected' : ''}>
                 2 สิ่งที่อยากเตรียม
               </span>
-            </div>
-          )}
-          {(!register || step === 0) && (
-            <div className="auth-mock-panel">
-              <div>
-                <FlaskConical size={17} />
-                <span>ลองกรอกด้วยบัญชีสมมติ</span>
-              </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-small"
-                disabled={busy}
-                onClick={fillMockAccount}
-              >
-                กรอกข้อมูลตัวอย่าง
-              </button>
-              <p aria-live="polite">
-                {mockFilled
-                  ? register
-                    ? 'กรอกข้อมูลตัวอย่างแล้ว คุณแก้ไขและกดถัดไปได้ โดยยังต้องยืนยันความยินยอมด้วยตนเอง'
-                    : 'กรอกข้อมูลแล้ว กดเข้าสู่ระบบตัวอย่างเพื่อเปิดบัญชีทดลองของคุณสมชาย'
-                  : 'เติมข้อมูลให้โดยอัตโนมัติ เพื่อทดลองขั้นตอนด้วยตัวคุณเอง'}
-              </p>
             </div>
           )}
           <form onSubmit={submit} className="stack">
@@ -323,6 +300,29 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               </button>
             )}
           </form>
+          {(!register || step === 0) && (
+            <div className="auth-mock-panel">
+              <div>
+                <FlaskConical size={17} />
+                <span>ลองกรอกด้วยบัญชีสมมติ</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-small"
+                disabled={busy}
+                onClick={fillMockAccount}
+              >
+                กรอกข้อมูลตัวอย่าง
+              </button>
+              <p aria-live="polite">
+                {mockFilled
+                  ? register
+                    ? 'กรอกข้อมูลตัวอย่างแล้ว คุณแก้ไขและกดถัดไปได้ โดยยังต้องยืนยันความยินยอมด้วยตนเอง'
+                    : 'กรอกข้อมูลแล้ว กดเข้าสู่ระบบตัวอย่างเพื่อเปิดบัญชีทดลองของคุณสมชาย'
+                  : 'เติมข้อมูลให้โดยอัตโนมัติ เพื่อทดลองขั้นตอนด้วยตัวคุณเอง'}
+              </p>
+            </div>
+          )}
           <div className="auth-divider">
             <span>หรือสำรวจก่อนเริ่มต้น</span>
           </div>

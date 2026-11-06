@@ -3104,3 +3104,157 @@ tbody tr:hover {
   line-height: 1.8;
   color: #6f7f74;
 }
+
+/* Photographic botanical artwork: preserve the quiet original palette. */
+.tree-art {
+  object-fit: contain;
+  pointer-events: none;
+}
+.hero-art {
+  background: radial-gradient(ellipse at 55% 65%, #eef1e4 0%, #f8f8f2 65%, transparent 100%);
+  border-radius: 24px;
+  height: 500px;
+}
+.hero-art > .tree-art {
+  width: 100%;
+  height: 420px;
+  bottom: 42px;
+  right: 0;
+}
+.hero-note {
+  top: 12px;
+  left: 22px;
+}
+.hero-note p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.hero-note > svg {
+  width: 15px;
+  height: 15px;
+  margin-bottom: 4px;
+}
+.hero-art .floating-document {
+  bottom: 35px;
+  left: 8px;
+  box-shadow: 0 8px 24px #142b450a;
+}
+.care-panel {
+  background: linear-gradient(110deg, #f8f9f3, #edf1e5);
+}
+.care-panel > div {
+  max-width: 62%;
+}
+.care-panel .tree-art {
+  width: 49%;
+  height: 90%;
+  right: -10px;
+  bottom: 3px;
+  opacity: 1;
+}
+.care-panel h2 { color: #294a43; }
+.care-panel p { color: #65766a; }
+.care-panel a { color: #2f7773; }
+@media (max-width: 600px) {
+  .hero-art { height: 390px; max-width: 420px; }
+  .hero-art > .tree-art { height: 320px; bottom: 40px; }
+  .hero-note { top: 0; left: 10px; }
+  .hero-note p { font-size: 11px; }
+  .hero-art .floating-document {
+    min-width: 0;
+    width: calc(100% - 24px);
+    left: 12px;
+    bottom: 30px;
+  }
+  .care-panel > div { max-width: 63%; }
+  .care-panel h2 { font-size: 19px; }
+  .care-panel h2 br { display: initial; }
+}
+
+/* Account entry: a calm botanical panel and a clear, readable form. */
+.auth-page {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  padding: 20px;
+  gap: 20px;
+  background: #fcfcfa;
+}
+.auth-story {
+  border-radius: 24px;
+  background: #eef2e9;
+  padding: 36px 44px 28px;
+  color: #142b45;
+  min-width: 0;
+}
+.auth-story-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 44px 0 8px;
+  margin: auto 0;
+}
+.auth-heart { display: none; }
+.auth-story-copy h2 {
+  font-size: clamp(28px, 2.5vw, 40px);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.6px;
+}
+.auth-story-copy p {
+  font-size: 15px;
+  color: #586b62;
+  margin-top: 16px;
+  line-height: 1.9;
+}
+.auth-story-copy .tree-art {
+  position: static;
+  width: min(100%, 430px);
+  height: auto;
+  max-height: 42vh;
+  opacity: 1;
+  margin-top: 24px;
+}
+.auth-tagline {
+  text-align: center;
+  color: #617369;
+  font-size: 12px;
+  margin-top: 20px;
+}
+.auth-main { padding: 22px 44px; }
+.auth-back { font-size: 13px; color: #62716d; }
+.auth-box { max-width: 420px; padding: 44px 0; }
+.auth-box h1 { font-size: 30px; line-height: 1.5; color: #142b45; }
+.auth-box > p.muted { font-size: 14px; line-height: 1.8; color: #66746f; margin-bottom: 30px; }
+.auth-box .field { font-size: 14px; color: #34473f; gap: 9px; }
+.auth-box input { font-size: 16px; min-height: 48px; }
+.auth-box input::placeholder { color: #86928d; }
+.auth-box .btn { font-size: 14px; min-height: 48px; }
+.auth-box .auth-mock-panel {
+  margin: 20px 0 0;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid #e5eae4;
+  border-radius: 0;
+  background: transparent;
+}
+.auth-box .auth-mock-panel > div { font-size: 12px; color: #66746f; }
+.auth-box .auth-mock-panel .btn { font-size: 12px; min-height: 36px; }
+.auth-box .auth-mock-panel > p { font-size: 11px; color: #6c7872; }
+.auth-divider { margin: 20px 0; }
+.auth-switch { font-size: 13px; color: #66746f; }
+.auth-security { font-size: 12px; color: #66746f; line-height: 1.7; }
+@media (max-width: 1000px) and (min-width: 761px) {
+  .auth-page { grid-template-columns: 44% 56%; gap: 0; padding: 14px; }
+  .auth-story { padding: 28px 22px; }
+  .auth-main { padding: 22px 28px; }
+  .auth-story-copy h2 { font-size: 28px; }
+}
+@media (max-width: 760px) {
+  .auth-page { display: block; padding: 0; background: #fcfcfa; }
+  .auth-story { display: none; }
+  .auth-main { padding: 24px; min-height: 100svh; }
+  .auth-box { padding: 32px 0 20px; margin: auto; }
+  .auth-box > .brand { display: inline-flex; margin-bottom: 28px; }
+  .auth-box h1 { font-size: 27px; }
+  .auth-box > p.muted { font-size: 14px; }
+}
