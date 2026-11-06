@@ -1,0 +1,64 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "heroText": "18px",
+      "sectionText": "16px",
+      "headerButton": "16px",
+      "treeAnimation": "yootor-tree-breeze",
+      "treeHeight": 417.2327880859375,
+      "heroTitle": "58px"
+    },
+    {
+      "width": 1024,
+      "overflow": false,
+      "heroText": "17px",
+      "sectionText": "16px",
+      "headerButton": "16px",
+      "treeAnimation": "yootor-tree-breeze",
+      "treeHeight": 343.4686584472656,
+      "heroTitle": "42px"
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "heroText": "17px",
+      "sectionText": "16px",
+      "headerButton": "16px",
+      "treeAnimation": "yootor-tree-breeze",
+      "treeHeight": 339.6512756347656,
+      "heroTitle": "42px"
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "heroText": "17px",
+      "sectionText": "16px",
+      "headerButton": "16px",
+      "treeAnimation": "yootor-tree-breeze",
+      "treeHeight": 320.5860595703125,
+      "heroTitle": "34.32px"
+    },
+    {
+      "width": 320,
+      "overflow": false,
+      "heroText": "17px",
+      "sectionText": "16px",
+      "headerButton": "16px",
+      "treeAnimation": "yootor-tree-breeze",
+      "treeHeight": 318.3890380859375,
+      "heroTitle": "32px"
+    }
+  ],
+  "errors": [],
+  "checks": [
+    "responsive typography",
+    "no horizontal overflow at five widths",
+    "mobile menu open and closes on anchor",
+    "tree pause/resume",
+    "reduced motion",
+    "FAQ",
+    "demo opens app"
+  ]
+}

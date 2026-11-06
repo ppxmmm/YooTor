@@ -1,0 +1,146 @@
+{
+  "records": [
+    {
+      "route": "login",
+      "width": 1440,
+      "overflow": false,
+      "theme": "rgb(238, 243, 233)",
+      "tree": "auth-return-breeze",
+      "heading": "ยินดีต้อนรับกลับมา",
+      "fields": [
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "login",
+      "width": 1024,
+      "overflow": false,
+      "theme": "rgb(238, 243, 233)",
+      "tree": "auth-return-breeze",
+      "heading": "ยินดีต้อนรับกลับมา",
+      "fields": [
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "login",
+      "width": 768,
+      "overflow": false,
+      "theme": "rgb(238, 243, 233)",
+      "tree": "auth-return-breeze",
+      "heading": "ยินดีต้อนรับกลับมา",
+      "fields": [
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "login",
+      "width": 390,
+      "overflow": false,
+      "theme": "rgb(238, 243, 233)",
+      "tree": "auth-return-breeze",
+      "heading": "ยินดีต้อนรับกลับมา",
+      "fields": [
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "login",
+      "width": 320,
+      "overflow": false,
+      "theme": "rgb(238, 243, 233)",
+      "tree": "auth-return-breeze",
+      "heading": "ยินดีต้อนรับกลับมา",
+      "fields": [
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "register",
+      "width": 1440,
+      "overflow": false,
+      "theme": "rgb(23, 56, 74)",
+      "tree": "auth-new-breeze",
+      "heading": "เริ่มต้นความห่วงใยที่อยู่ต่อ",
+      "fields": [
+        "text",
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "register",
+      "width": 1024,
+      "overflow": false,
+      "theme": "rgb(23, 56, 74)",
+      "tree": "auth-new-breeze",
+      "heading": "เริ่มต้นความห่วงใยที่อยู่ต่อ",
+      "fields": [
+        "text",
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "register",
+      "width": 768,
+      "overflow": false,
+      "theme": "rgb(23, 56, 74)",
+      "tree": "auth-new-breeze",
+      "heading": "เริ่มต้นความห่วงใยที่อยู่ต่อ",
+      "fields": [
+        "text",
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "register",
+      "width": 390,
+      "overflow": false,
+      "theme": "rgb(23, 56, 74)",
+      "tree": "auth-new-breeze",
+      "heading": "เริ่มต้นความห่วงใยที่อยู่ต่อ",
+      "fields": [
+        "text",
+        "email",
+        "password"
+      ]
+    },
+    {
+      "route": "register",
+      "width": 320,
+      "overflow": false,
+      "theme": "rgb(23, 56, 74)",
+      "tree": "auth-new-breeze",
+      "heading": "เริ่มต้นความห่วงใยที่อยู่ต่อ",
+      "fields": [
+        "text",
+        "email",
+        "password"
+      ]
+    }
+  ],
+  "baseline": {
+    "labelTop": 539.65625,
+    "wordTop": 539.65625,
+    "labelHeight": 29,
+    "wordHeight": 29
+  },
+  "errors": [],
+  "checks": [
+    "two distinct themes",
+    "mobile and tablet no overflow",
+    "registration step1/2/back preserves inputs",
+    "consent never prechecked",
+    "show password",
+    "motion pause and reduced motion",
+    "home rotating phrase aligns",
+    "demo login works"
+  ]
+}

@@ -1,6 +1,6 @@
-'use client';
-import Link from 'next/link';
-import { useState } from 'react';
+"use client";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -16,42 +16,83 @@ import {
   Menu,
   X,
   LoaderCircle,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { Brand, TreeArt } from './brand';
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Brand, TreeArt } from "./brand";
+import "./landing.css";
 export function Landing() {
   const router = useRouter();
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState(''),
+    [error, setError] = useState(""),
     [menu, setMenu] = useState(false);
+  const landingRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          (entry.target as HTMLElement).dataset.revealed = "true";
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.12 },
+    );
+    landingRef.current
+      ?.querySelectorAll(
+        ".journey-section, .features-section, .preview-section, .privacy-section, .faq-section, .landing-cta",
+      )
+      .forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
   async function demo() {
     setBusy(true);
-    setError('');
+    setError("");
     try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'demo', role: 'OWNER' }),
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "demo", role: "OWNER" }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'ไม่สามารถเริ่มทดลองได้');
-      router.push('/app');
+      if (!res.ok) throw new Error(data.error || "ไม่สามารถเริ่มทดลองได้");
+      router.push("/app");
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
     }
   }
   return (
-    <div className="landing">
-      <header className="landing-header">
+    <div
+      ref={landingRef}
+      className="landing motion-on"
+    >
+      <header
+        className="landing-header"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setMenu(false);
+        }}
+      >
         <Link href="/" aria-label="อยู่ต่อ หน้าแรก">
           <Brand />
         </Link>
-        <nav className={menu ? 'open' : ''}>
-          <a href="#how">อยู่ต่อช่วยอย่างไร</a>
-          <a href="#features">สิ่งที่คุณเตรียมได้</a>
-          <a href="#privacy">ความเป็นส่วนตัว</a>
-          <a href="#faq">คำถามที่พบบ่อย</a>
+        <nav
+          id="landing-nav"
+          aria-label="เมนูหลัก"
+          className={menu ? "open" : ""}
+        >
+          <a href="#how" onClick={() => setMenu(false)}>
+            อยู่ต่อช่วยอย่างไร
+          </a>
+          <a href="#features" onClick={() => setMenu(false)}>
+            สิ่งที่คุณเตรียมได้
+          </a>
+          <a href="#privacy" onClick={() => setMenu(false)}>
+            ความเป็นส่วนตัว
+          </a>
+          <a href="#faq" onClick={() => setMenu(false)}>
+            คำถามที่พบบ่อย
+          </a>
         </nav>
         <div className="landing-header-actions">
           <Link className="login-link" href="/login">
@@ -62,7 +103,9 @@ export function Landing() {
           </Link>
           <button
             className="btn mobile-menu"
-            aria-label="เปิดเมนู"
+            aria-label={menu ? "ปิดเมนู" : "เปิดเมนู"}
+            aria-expanded={menu}
+            aria-controls="landing-nav"
             onClick={() => setMenu(!menu)}
           >
             {menu ? <X /> : <Menu />}
@@ -73,16 +116,27 @@ export function Landing() {
         <section className="landing-hero">
           <div className="hero-copy">
             <h1>
-              วางแผนภาษีวันนี้
-              <br />
-              เตรียมมรดกให้คนข้างหลัง
-              <br />
-              <span>ไม่ต้องเริ่มจากศูนย์</span>
+              <span className="hero-line">เตรียมภาษีและมรดก</span>
+              <span className="hero-line">ให้คนข้างหลัง</span>
+              <span className="hero-line hero-accent">
+                ไม่ต้องเริ่มจากศูนย์
+              </span>
             </h1>
             <p className="hero-description">
-              จัดการภาษีของเจ้ามรดก รวบรวมกรมธรรม์ประกันชีวิต
+              รวบรวมทรัพย์สินและกรมธรรม์ ร่างพินัยกรรม
               <br className="desktop-break" />
-              และเขียนพินัยกรรม เพื่อส่งต่ออย่างเป็นระบบ
+              พร้อมแนวทางเตรียมภาษีของเจ้ามรดกในพื้นที่เดียว
+            </p>
+            <p className="hero-moving-copy">
+              <span>เริ่มจาก</span>
+              <span className="word-cycle" aria-hidden="true">
+                <span>ทรัพย์สินที่คุณมี</span>
+                <span>กรมธรรม์ที่เก็บไว้</span>
+                <span>ความตั้งใจถึงคนสำคัญ</span>
+              </span>
+              <span className="motion-copy-accessible">
+                ทรัพย์สินที่คุณมี กรมธรรม์ที่เก็บไว้ หรือความตั้งใจถึงคนสำคัญ
+              </span>
             </p>
             <div className="hero-buttons">
               <Link className="btn btn-primary" href="/register">
@@ -108,7 +162,6 @@ export function Landing() {
             </p>
           </div>
           <div className="hero-art">
-            <div className="hero-orbit" />
             <TreeArt />
             <div className="hero-note">
               <Heart size={19} />
@@ -130,9 +183,6 @@ export function Landing() {
                 <Check size={14} />
               </span>
             </div>
-            <span className="art-caption">
-              ความตั้งใจเล็ก ๆ วันนี้ ดูแลคนสำคัญได้ในวันข้างหน้า
-            </span>
           </div>
         </section>
         <section className="journey-section" id="how">
@@ -186,23 +236,23 @@ export function Landing() {
             {[
               {
                 icon: FolderHeart,
-                title: 'รวบรวมกรมธรรม์ประกันชีวิต',
-                text: 'บันทึกเลขกรมธรรม์ บริษัทประกัน ผู้รับประโยชน์ และเอกสารประกอบ เพื่อเตรียมติดต่อเรียกร้องสิทธิ',
+                title: "รวบรวมกรมธรรม์ประกันชีวิต",
+                text: "บันทึกเลขกรมธรรม์ บริษัทประกัน ผู้รับประโยชน์ และเอกสารประกอบ เพื่อเตรียมติดต่อเรียกร้องสิทธิ",
               },
               {
                 icon: Users,
-                title: 'จัดการภาษีของเจ้ามรดก',
-                text: 'แยกภาษีปีที่เสียชีวิต กองมรดกที่ยังไม่ได้แบ่ง และภาษีผู้รับมรดก พร้อมติดตามเอกสาร',
+                title: "เตรียมภาษีของเจ้ามรดก",
+                text: "แยกภาษีปีที่เสียชีวิต กองมรดกที่ยังไม่ได้แบ่ง และภาษีผู้รับมรดก พร้อมติดตามเอกสาร",
               },
               {
                 icon: FileText,
-                title: 'เขียนพินัยกรรม',
-                text: 'ช่วยร่างการจัดสรรทรัพย์สิน ระบุผู้รับและผู้จัดการมรดก บันทึกและดาวน์โหลดเพื่อทบทวนก่อนลงนาม',
+                title: "เขียนพินัยกรรมฉบับร่าง",
+                text: "ช่วยร่างการจัดสรรทรัพย์สิน ระบุผู้รับและผู้จัดการมรดก บันทึกและดาวน์โหลดเพื่อทบทวนก่อนลงนาม",
               },
               {
                 icon: HeartHandshake,
-                title: 'ผู้ช่วยค่อย ๆ อธิบายเรื่องยาก',
-                text: 'คำอธิบายภาษาไทย พร้อมแหล่งข้อมูลทางการ เพื่อใช้เตรียมคำถามให้ผู้เชี่ยวชาญ',
+                title: "ผู้ช่วยค่อย ๆ อธิบายเรื่องยาก",
+                text: "คำอธิบายภาษาไทย พร้อมแหล่งข้อมูลทางการ เพื่อใช้เตรียมคำถามให้ผู้เชี่ยวชาญ",
               },
             ].map((f) => (
               <article key={f.title}>
@@ -245,16 +295,16 @@ export function Landing() {
               </strong>
               <div>
                 <div className="progress">
-                  <i style={{ width: '80%' }} />
+                  <i style={{ width: "80%" }} />
                 </div>
                 <p>เริ่มต้นวันนี้ ค่อย ๆ เตรียมให้ครบ</p>
               </div>
             </div>
             <div className="mini-rows">
               {[
-                'บันทึกรายการทรัพย์สิน',
-                'ระบุบุคคลที่ไว้วางใจ',
-                'จัดเก็บเอกสารสำคัญ',
+                "บันทึกรายการทรัพย์สิน",
+                "ระบุบุคคลที่ไว้วางใจ",
+                "จัดเก็บเอกสารสำคัญ",
               ].map((s) => (
                 <div key={s}>
                   <span className="check-icon">
@@ -292,20 +342,20 @@ export function Landing() {
           <div className="faq-list">
             {[
               [
-                'อยู่ต่อเป็นบริการจัดทำพินัยกรรมหรือไม่?',
-                'อยู่ต่อช่วยเขียน บันทึก และดาวน์โหลดพินัยกรรมฉบับร่างได้ คุณต้องทบทวนข้อความและลงนามตามแบบที่กฎหมายกำหนดก่อนนำไปใช้ การกดบันทึกในระบบยังไม่ใช่การลงนามพินัยกรรม',
+                "อยู่ต่อเป็นบริการจัดทำพินัยกรรมหรือไม่?",
+                "อยู่ต่อช่วยเขียน บันทึก และดาวน์โหลดพินัยกรรมฉบับร่างได้ คุณต้องทบทวนข้อความและลงนามตามแบบที่กฎหมายกำหนดก่อนนำไปใช้ การกดบันทึกในระบบยังไม่ใช่การลงนามพินัยกรรม",
               ],
               [
-                'ครอบครัวจะเห็นข้อมูลของฉันทันทีหรือไม่?',
-                'ไม่เห็นโดยอัตโนมัติ ต้องเป็นผู้ติดต่อที่คุณระบุไว้ มีสิทธิ์ในหมวดข้อมูลนั้น และได้รับการอนุมัติคำขอ การอัปโหลดมรณบัตรไม่ทำให้ระบบเปิดข้อมูล',
+                "ครอบครัวจะเห็นข้อมูลของฉันทันทีหรือไม่?",
+                "ไม่เห็นโดยอัตโนมัติ ต้องเป็นผู้ติดต่อที่คุณระบุไว้ มีสิทธิ์ในหมวดข้อมูลนั้น และได้รับการอนุมัติคำขอ การอัปโหลดมรณบัตรไม่ทำให้ระบบเปิดข้อมูล",
               ],
               [
-                'ต้องเตรียมข้อมูลทั้งหมดให้ครบก่อนหรือเปล่า?',
-                'เริ่มจากข้อมูลเพียงหนึ่งรายการได้ แล้วกลับมาเติมรายละเอียด เอกสาร และคนที่ไว้วางใจเมื่อพร้อม',
+                "ต้องเตรียมข้อมูลทั้งหมดให้ครบก่อนหรือเปล่า?",
+                "เริ่มจากข้อมูลเพียงหนึ่งรายการได้ แล้วกลับมาเติมรายละเอียด เอกสาร และคนที่ไว้วางใจเมื่อพร้อม",
               ],
               [
-                'ทดลองใช้งานได้อย่างไร?',
-                'กดทดลองใช้งานระบบเพื่อสำรวจข้อมูลสมมติของคุณสมชาย สลับมุมมองครอบครัวเพื่อทดลองขอสิทธิ์ และกลับเป็นเจ้าของเพื่อพิจารณาคำขอได้ โดยไม่ใช้ข้อมูลจริง',
+                "ทดลองใช้งานได้อย่างไร?",
+                "กดทดลองใช้งานระบบเพื่อสำรวจข้อมูลสมมติของคุณสมชาย สลับมุมมองครอบครัวเพื่อทดลองขอสิทธิ์ และกลับเป็นเจ้าของเพื่อพิจารณาคำขอได้ โดยไม่ใช้ข้อมูลจริง",
               ],
             ].map(([q, a]) => (
               <details key={q}>

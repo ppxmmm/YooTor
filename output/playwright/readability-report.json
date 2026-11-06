@@ -1,0 +1,506 @@
+{
+  "results": [
+    {
+      "name": "yootor-landing-readable",
+      "overflow": false,
+      "bodyWeight": "500",
+      "font": "\"IBM Plex Sans Thai\", Manrope, sans-serif",
+      "logoStroke": "5.4",
+      "mutedColor": "#52636d",
+      "brandBoxes": [
+        {
+          "w": 118.640625,
+          "h": 48
+        },
+        {
+          "w": 79.40625,
+          "h": 34.046875
+        },
+        {
+          "w": 92.28125,
+          "h": 48
+        }
+      ],
+      "fonts": [
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "yootor-landing-readable-mobile",
+      "overflow": false,
+      "bodyWeight": "500",
+      "font": "\"IBM Plex Sans Thai\", Manrope, sans-serif",
+      "logoStroke": "5.4",
+      "mutedColor": "#52636d",
+      "brandBoxes": [
+        {
+          "w": 97.75,
+          "h": 43.25
+        },
+        {
+          "w": 79.40625,
+          "h": 34.046875
+        },
+        {
+          "w": 92.28125,
+          "h": 48
+        }
+      ],
+      "fonts": [
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "yootor-login-readable",
+      "overflow": false,
+      "bodyWeight": "500",
+      "font": "\"IBM Plex Sans Thai\", Manrope, sans-serif",
+      "logoStroke": "5.4",
+      "mutedColor": "#52636d",
+      "brandBoxes": [
+        {
+          "w": 118.640625,
+          "h": 48
+        },
+        {
+          "w": 0,
+          "h": 0
+        }
+      ],
+      "fonts": [
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "yootor-dashboard-readable",
+      "overflow": false,
+      "bodyWeight": "500",
+      "font": "\"IBM Plex Sans Thai\", Manrope, sans-serif",
+      "logoStroke": "5.4",
+      "mutedColor": "#52636d",
+      "brandBoxes": [
+        {
+          "w": 118.640625,
+          "h": 48
+        }
+      ],
+      "fonts": [
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "loaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "yootor-assets-readable",
+      "overflow": false,
+      "bodyWeight": "500",
+      "font": "\"IBM Plex Sans Thai\", Manrope, sans-serif",
+      "logoStroke": "5.4",
+      "mutedColor": "#52636d",
+      "brandBoxes": [
+        {
+          "w": 118.640625,
+          "h": 48
+        }
+      ],
+      "fonts": [
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        }
+      ]
+    },
+    {
+      "name": "yootor-sidebar-readable-mobile",
+      "overflow": false,
+      "bodyWeight": "500",
+      "font": "\"IBM Plex Sans Thai\", Manrope, sans-serif",
+      "logoStroke": "5.4",
+      "mutedColor": "#52636d",
+      "brandBoxes": [
+        {
+          "w": 118.640625,
+          "h": 48
+        }
+      ],
+      "fonts": [
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "weight": "400",
+          "status": "unloaded"
+        },
+        {
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "500",
+          "status": "unloaded"
+        },
+        {
+          "weight": "500",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "600",
+          "status": "unloaded"
+        },
+        {
+          "weight": "600",
+          "status": "loaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "loaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        },
+        {
+          "weight": "700",
+          "status": "unloaded"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "iconStatus": 200
+}
