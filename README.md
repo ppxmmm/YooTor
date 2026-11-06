@@ -14,7 +14,7 @@ npm run db:generate
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Choose **ทดลองใช้งานระบบ**. No paid AI service, email provider, or database is needed for local development. With no `DATABASE_URL`, the app stores data in AES-256-GCM-encrypted `.data/vault.enc`, with a development key in `.data/encryption.key`. Both are ignored by Git. Keep the key with the data: losing it makes the data unreadable.
+Open [http://localhost:3000](http://localhost:3000). Choose **ทดลองใช้งานระบบ**. No paid AI service, email provider, or database is needed for local development. With no `DATABASE_URL`, the app stores data in AES-256-GCM-encrypted `.data/vault.enc`. It uses `DATA_ENCRYPTION_KEY` from the environment when set, otherwise it creates a development key in `.data/encryption.key`. These files are ignored by Git. Keep the key with the data: losing it makes the data unreadable.
 
 Do not use the local file store across multiple processes. Production explicitly requires PostgreSQL and a deployment encryption key.
 
@@ -25,13 +25,13 @@ docker compose up -d
 cp .env.example .env
 ```
 
-Uncomment `DATABASE_URL` in `.env` using the connection string in the example. Generate a separate random 32-byte encryption key for deployment:
+Uncomment `DATABASE_URL` in `.env` and set it to your PostgreSQL connection string. For an existing encrypted database, set `DATA_ENCRYPTION_KEY` to the **same key** used to encrypt its records. Anyone running the app against that database needs the same key. For a new, empty database, generate a random 32-byte encryption key:
 
 ```sh
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Set `DATA_ENCRYPTION_KEY` to that value. Never commit `.env` or the key.
+Set `DATA_ENCRYPTION_KEY` to that value. Never generate a replacement key for existing encrypted records, and never commit `.env` or the key. Set the same variables in your deployment environment when deploying.
 
 ```sh
 npm run db:migrate
