@@ -728,3 +728,118 @@ button:disabled {
     transition: none;
   }
 }
+
+.will-journey { margin-bottom: 24px; }
+.product-pages .will-journey .panel {
+  padding: 24px;
+}
+.product-pages .will-journey .panel.stack,
+.product-pages .will-journey .panel .stack {
+  margin-bottom: 0;
+}
+.will-journey-intro h2,
+.will-journey .panel.stack h2 {
+  font-size: 18px;
+  line-height: 1.5;
+}
+.will-journey-intro > div:first-child > p,
+.will-journey .panel.stack > p,
+.will-journey .panel.stack > div > p {
+  font-size: 14px;
+  line-height: 1.75;
+}
+.will-journey .panel.stack > form,
+.will-journey .panel.stack > .stack {
+  width: 100%;
+  max-width: 900px;
+}
+.will-journey .field {
+  min-width: 0;
+  line-height: 1.6;
+}
+.will-journey .field input,
+.will-journey .field select,
+.will-journey .field textarea {
+  width: 100%;
+  min-width: 0;
+}
+.will-journey form > .btn {
+  align-self: flex-start;
+}
+.will-journey-intro h2 { margin-bottom: 6px; }
+.will-journey-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+.will-journey-choice { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; padding: 20px; border: 1px solid #dce8e2; border-radius: 12px; background: #f9fbf8; text-align: left; color: #193a3d; cursor: pointer; }
+.will-journey-choice:hover, .will-journey-choice[aria-pressed='true'] { border-color: #2f8c88; background: #eff8f4; }
+.will-journey-choice:focus-visible { outline: 3px solid #2f8c88; outline-offset: 3px; }
+.will-journey-choice strong { font-size: 16px; }
+.will-journey-choice span { font-size: 13px; line-height: 1.6; color: #64766d; }
+.will-journey-choice .will-journey-link { color: #20756f; font-weight: 600; margin-top: 4px; }
+.will-journey > [hidden] { display: none; }
+.will-journey > div + div:not([hidden]) { margin-top: 16px; }
+.will-journey-notice { margin-bottom: 16px; }
+.will-review-result {
+  padding: 22px;
+  border: 1px solid #dce8e2;
+  border-radius: 10px;
+  background: #f8fbf8;
+}
+.will-review-result h3 { margin: 4px 0 6px; color: #193a3d; }
+.will-review-edit { align-self: flex-start; }
+.will-review-result-label { color: #287b71; font-size: 13px; font-weight: 600; }
+.will-review-result .notice { margin: 0; }
+.will-discard-dialog { max-width: 440px; }
+.will-discard-dialog h2 { font-size: 20px; line-height: 1.5; }
+.will-discard-dialog p { margin-top: 12px; color: #536c60; font-size: 14px; line-height: 1.8; }
+.will-discard-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+@media (max-width: 600px) {
+  .product-pages .will-journey .panel { padding: 20px 18px; }
+  .will-journey-choices { grid-template-columns: 1fr; }
+  .will-journey-choice { padding: 16px; }
+  .will-journey .wp-actions { flex-wrap: wrap; }
+  .will-journey form > .btn { align-self: stretch; }
+  .will-review-result { padding: 16px; }
+  .will-discard-actions .btn { flex: 1 1 auto; }
+}
+
+.wp-review-list { margin-bottom: 24px; padding: 24px; }
+.wp-review-list-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.wp-review-list-heading h2, .wp-notes-heading h2 { font-size: 18px; }
+.wp-review-list-heading p, .wp-notes-heading p { font-size: 13px; margin-top: 6px; line-height: 1.7; }
+.wp-review-list-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 0; border-top: 1px solid #e6ebe8; margin-top: 16px; }
+.wp-review-list-row + .wp-review-list-row { margin-top: 0; }
+.wp-review-empty { margin-top: 20px; font-size: 13px; }
+.wp-notes-heading { margin: 28px 0 14px; }
+.will-link-field { border: 1px solid #dce8e2; border-radius: 10px; padding: 16px; display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.will-link-field legend { padding: 0 5px; font-weight: 600; }
+.will-link-field label { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.will-link-field input { width: auto; }
+@media (max-width: 600px) { .wp-review-list { padding: 20px 18px; } .wp-review-list-row { align-items: flex-start; flex-direction: column; } }
+.will-step[hidden] { display: none; }
+.will-step-indicator { color: #287b71; font-size: 13px; font-weight: 600; }
+.will-step-actions { flex-wrap: wrap; }
+.asset-planning-fields { border: 1px solid #dce8e2; border-radius: 10px; padding: 14px; }
+.asset-planning-fields summary { cursor: pointer; font-weight: 600; }
+.asset-planning-fields > .stack { margin-top: 16px; }
+.will-witness-field > .form-grid { width: 100%; }
+.inheritance-estimator { padding: 24px; margin-bottom: 22px; }
+.inheritance-estimator h2 { font-size: 18px; }
+.inheritance-estimator .notice { line-height: 1.7; margin: 0; }
+.inheritance-estimator form { max-width: 900px; }
+.inheritance-estimator form > .btn { align-self: flex-start; }
+.inheritance-confirm { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.7; }
+.inheritance-confirm input { margin-top: 5px; }
+@media (max-width: 600px) { .inheritance-estimator { padding: 20px 18px; } .inheritance-estimator form > .btn { align-self: stretch; } }
+.debt-registry { padding: 24px; margin-bottom: 24px; }
+.debt-header, .debt-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.debt-header h2 { font-size: 18px; }
+.debt-header p, .debt-row p { font-size: 13px; line-height: 1.7; margin-top: 5px; }
+.debt-list, .debt-empty { margin-top: 18px; }
+.debt-row { border-top: 1px solid #e6ebe8; padding: 16px 0; }
+.debt-form { padding-top: 20px; border-top: 1px solid #e6ebe8; }
+@media (max-width: 600px) { .debt-registry { padding: 20px 18px; } .debt-header, .debt-row { flex-direction: column; } .debt-row .wp-actions { flex-wrap: wrap; } }
+.asset-beneficiaries { display: grid; grid-template-columns: 1fr; }
+.asset-beneficiary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 180px); align-items: center; gap: 12px; padding: 8px 0; }
+.asset-beneficiary > label:first-child { display: flex; align-items: center; gap: 8px; }
+.asset-beneficiary .field { font-size: 12px; }
+@media (max-width: 600px) { .asset-beneficiary { grid-template-columns: 1fr; } }
+.asset-beneficiary .field input { width: 100%; min-width: 0; }

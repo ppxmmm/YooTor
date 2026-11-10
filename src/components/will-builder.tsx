@@ -5,11 +5,14 @@ import { buildWillDraft } from '@/lib/estate-planning';
 export function WillBuilder({
   save,
   notify,
+  onReview,
 }: {
   save: (content: string) => Promise<unknown>;
   notify: (message: string) => void;
+  onReview: (details: { name: string; date: string }) => void;
 }) {
   const [draft, setDraft] = useState('');
+  const [draftDetails, setDraftDetails] = useState({ name: '', date: '' });
   const [busy, setBusy] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,6 +24,7 @@ export function WillBuilder({
       dispositions: String(data.get('dispositions') || ''),
       executor: String(data.get('executor') || ''),
     });
+    setDraftDetails({ name: String(data.get('name') || ''), date: String(data.get('date') || '') });
     setDraft(text);
   }
   async function persist() {
@@ -93,6 +97,7 @@ export function WillBuilder({
               maxLength={4000}
             />
           </label>
+          <p className="muted">ตรวจข้อความด้านบนก่อนดำเนินการต่อ ระบบยังไม่ได้อ่านหรือตรวจข้อความในฉบับร่างโดยอัตโนมัติ</p>
           <div className="wp-actions">
             <button
               className="btn btn-primary"
@@ -107,6 +112,9 @@ export function WillBuilder({
               onClick={download}
             >
               ดาวน์โหลดฉบับร่าง (.txt)
+            </button>
+            <button type="button" className="btn btn-secondary" disabled={!draft.trim()} onClick={() => onReview(draftDetails)}>
+              ไปตรวจทานขั้นตอนต่อ
             </button>
           </div>
         </div>
