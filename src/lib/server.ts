@@ -1,3 +1,4 @@
+import { savedWillReviewSchema, willReviewSchema } from './will-review';
 import {
   randomBytes,
   randomUUID,
@@ -92,6 +93,36 @@ const schemas: Record<string, z.ZodType> = {
     reference: text.default(''),
     notes: text.default(''),
     status: z.enum(['complete', 'incomplete']).default('incomplete'),
+    valuedAt: z.iso.date().or(z.literal('')).optional(),
+    ownership: z.enum(['', 'sole', 'joint', 'marital', 'unknown']).optional(),
+    ownershipShare: z.number().min(0).max(100).nullable().optional(),
+    debtOutstanding: z.number().min(0).max(1e14).nullable().optional(),
+    beneficiaryIds: z.array(z.string().max(100)).max(50).optional(),
+    beneficiaryShares: z.array(z.object({ contactId: z.string().min(1).max(100), share: z.number().min(0).max(100) })).max(50).optional(),
+    documentIds: z.array(z.string().max(100)).max(30).optional(),
+    insurance: z.object({
+      insured: z.string().trim().min(1).max(200),
+      policyType: z.enum(['life', 'accident', 'health', 'pension', 'savings', 'other']),
+      policyStatus: z.enum(['active', 'lapsed', 'matured', 'claimed', 'unknown']),
+      startDate: z.iso.date().or(z.literal('')),
+      endDate: z.iso.date().or(z.literal('')),
+      beneficiaryKind: z.enum(['named', 'heirs', 'none', 'unknown']),
+      beneficiaries: z.array(z.object({ name: z.string().trim().max(200), relationship: z.string().trim().max(100), share: z.number().min(0).max(100).nullable() })).max(20),
+      premiumsPaid: z.number().min(0).max(1e14).nullable(),
+    }).superRefine((policy, ctx) => {
+      if (policy.beneficiaryKind === 'named' && (!policy.beneficiaries.length || policy.beneficiaries.some(person => !person.name)))
+        ctx.addIssue({ code: 'custom', message: 'กรุณาระบุชื่อผู้รับประโยชน์', path: ['beneficiaries'] });
+      if (policy.beneficiaryKind === 'named' && policy.beneficiaries.length && policy.beneficiaries.every(person => person.share !== null) && Math.abs(policy.beneficiaries.reduce((sum, person) => sum + (person.share || 0), 0) - 100) > 0.001)
+        ctx.addIssue({ code: 'custom', message: 'สัดส่วนผู้รับประโยชน์รวมต้องเท่ากับ 100%', path: ['beneficiaries'] });
+      if (policy.startDate && policy.endDate && policy.startDate > policy.endDate)
+        ctx.addIssue({ code: 'custom', message: 'วันสิ้นสุดต้องไม่ก่อนวันเริ่มคุ้มครอง', path: ['endDate'] });
+    }).optional(),
+  }).superRefine((asset, ctx) => {
+    const shares = asset.beneficiaryShares || [];
+    if (new Set(shares.map(item => item.contactId)).size !== shares.length || shares.some(item => !asset.beneficiaryIds?.includes(item.contactId)))
+      ctx.addIssue({ code: 'custom', message: 'กรุณาตรวจรายชื่อและสัดส่วนผู้รับ', path: ['beneficiaryShares'] });
+    if (shares.reduce((sum, item) => sum + item.share, 0) > 100.000001)
+      ctx.addIssue({ code: 'custom', message: 'สัดส่วนผู้รับรวมต้องไม่เกิน 100%', path: ['beneficiaryShares'] });
   }),
   contacts: z.object({
     name: text.min(1),
@@ -132,6 +163,18 @@ const schemas: Record<string, z.ZodType> = {
   }),
   profile: z.object({
     ...onboardingFields,
+    willReview: willReviewSchema.optional(),
+    willReviews: z.array(savedWillReviewSchema).max(30).optional(),
+    debts: z.array(z.object({
+      id: z.string().min(1).max(100),
+      creditor: z.string().trim().min(1).max(200),
+      kind: z.enum(['loan', 'credit', 'personal', 'expense', 'other']),
+      amount: z.number().min(0).max(1e14),
+      asOf: z.iso.date().or(z.literal('')),
+      security: z.enum(['yes', 'no', 'unknown']),
+      assetId: z.string().max(100),
+      notes: z.string().trim().max(1000),
+    })).max(100).optional(),
     name: text.min(1).optional(),
     phone: text.optional(),
     address: text.optional(),
@@ -907,6 +950,13 @@ export function createService(
         const data = schemas[resource].parse(
           method === 'PATCH' ? { ...rows[index], ...body } : body,
         ) as object;
+        if (resource === 'assets') {
+          const asset = data as { beneficiaryIds?: string[]; documentIds?: string[] };
+          if ('beneficiaryIds' in body && asset.beneficiaryIds?.some(id => !home.contacts.some(contact => contact.id === id)))
+            throw new ApiError(400, 'ไม่พบผู้รับที่เลือกในบัญชีนี้');
+          if ('documentIds' in body && asset.documentIds?.some(id => !home.documents.some(document => document.id === id)))
+            throw new ApiError(400, 'ไม่พบเอกสารที่เลือกในบัญชีนี้');
+        }
         const row = { ...data, id: method === 'PATCH' ? id : randomUUID() };
         if (method === 'PATCH') rows[index] = row;
         else rows.push(row);

@@ -26,7 +26,11 @@ import {
 } from 'lucide-react';
 import './workspace-pages.css';
 import { InsuranceBuilder } from './insurance-builder';
-import { WillBuilder } from './will-builder';
+import { InsuranceEditFields } from './insurance-edit-fields';
+import { DebtRegistry } from './debt-registry';
+import { InheritanceEstimator } from './inheritance-estimator';
+import { WillJourney, type WillJourneyHandle } from './will-journey';
+import type { SavedWillReview } from '@/lib/will-review';
 import { DocumentPreview } from './pdf-preview';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -139,6 +143,7 @@ function Field({
       <input
         name={name}
         type={type}
+        step={type === 'number' ? 'any' : undefined}
         defaultValue={defaultValue}
         required={required}
       />
@@ -180,6 +185,7 @@ export function WorkspacePages(props: Props) {
 }
 function Page({ section, state, refresh, notify }: Props) {
   const router = useRouter();
+  const willJourneyRef = useRef<WillJourneyHandle>(null);
   const [editing, setEditing] = useState<Row | null>(null),
     [busy, setBusy] = useState(false),
     [query, setQuery] = useState(''),
@@ -250,7 +256,33 @@ function Page({ section, state, refresh, notify }: Props) {
     const values = Object.fromEntries(new FormData(e.currentTarget));
     const body: Row = { ...values };
     if (editing?.id) body.id = editing.id;
-    if (section === 'assets') body.value = Number(body.value);
+    if (section === 'assets') {
+      body.value = Number(body.value);
+      body.ownershipShare = body.ownershipShare === '' ? null : Number(body.ownershipShare);
+      body.debtOutstanding = body.debtOutstanding === '' ? null : Number(body.debtOutstanding);
+      body.beneficiaryIds = new FormData(e.currentTarget).getAll('beneficiaryIds');
+      const assetForm = new FormData(e.currentTarget);
+      body.beneficiaryShares = (body.beneficiaryIds as string[]).flatMap(contactId => {
+        const raw = String(assetForm.get(`beneficiaryShare_${contactId}`) || '').trim();
+        return raw ? [{ contactId, share: Number(raw) }] : [];
+      });
+      if (body.beneficiaryShares.reduce((sum: number, row: { share: number }) => sum + row.share, 0) > 100.000001) {
+        notify('สัดส่วนผู้รับที่ตั้งใจไว้รวมกันต้องไม่เกิน 100%');
+        return;
+      }
+      body.documentIds = new FormData(e.currentTarget).getAll('documentIds');
+      if (editing?.insurance) {
+        const form = new FormData(e.currentTarget);
+        const names = form.getAll('policyBeneficiaryName').map(String);
+        const relationships = form.getAll('policyBeneficiaryRelationship').map(String);
+        const shares = form.getAll('policyBeneficiaryShare').map(String);
+        const kind = String(form.get('policyBeneficiaryKind'));
+        const people = names.map((name, i) => ({ name: name.trim(), relationship: (relationships[i] || '').trim(), share: shares[i] ? Number(shares[i]) : null }));
+        if (kind === 'named' && (!people.length || people.some(p => !p.name))) { notify('กรุณาระบุชื่อผู้รับประโยชน์แต่ละคน'); return; }
+        if (people.length && people.every(p => p.share !== null) && Math.abs(people.reduce((sum, p) => sum + (p.share || 0), 0) - 100) > 0.001) { notify('สัดส่วนผู้รับประโยชน์รวมต้องเท่ากับ 100%'); return; }
+        body.insurance = { insured: String(form.get('policyInsured') || ''), policyType: String(form.get('policyType')), policyStatus: String(form.get('policyStatus')), startDate: String(form.get('policyStart') || ''), endDate: String(form.get('policyEnd') || ''), beneficiaryKind: kind, beneficiaries: people, premiumsPaid: form.get('policyPremiums') ? Number(form.get('policyPremiums')) : null };
+      }
+    }
     if (section === 'contacts')
       body.permissions = new FormData(e.currentTarget).getAll('permissions');
     try {
@@ -279,6 +311,7 @@ function Page({ section, state, refresh, notify }: Props) {
           .toLowerCase()
           .includes(query.toLowerCase()),
     );
+    const reviews: SavedWillReview[] = state.profile?.willReviews ?? (state.profile?.willReview ? [{ id: 'legacy', data: state.profile.willReview }] : []);
     return (
       <>
         <Heading
@@ -288,13 +321,13 @@ function Page({ section, state, refresh, notify }: Props) {
               ? 'รวบรวมข้อมูลสำคัญไว้ในที่เดียว เพื่อวันที่คนข้างหลังต้องใช้'
               : isContact
                 ? 'คนที่คุณไว้วางใจ และคนที่คุณอยากดูแล'
-                : 'เขียนพินัยกรรม จัดสรรทรัพย์สิน และบอกความประสงค์ให้คนที่รัก'
+                : 'ตรวจพินัยกรรมที่มีอยู่ และบันทึกสิ่งที่อยากบอกคนใกล้ชิด'
           }
         >
           <button className="btn btn-primary" onClick={() => setEditing({})}>
             <Plus size={18} />
             เพิ่ม
-            {isAsset ? 'ทรัพย์สิน' : isContact ? 'ผู้ติดต่อ' : 'ความตั้งใจ'}
+            {isAsset ? 'ทรัพย์สิน' : isContact ? 'ผู้ติดต่อ' : 'บันทึกความประสงค์'}
           </button>
         </Heading>
         {section === 'instructions' && (
@@ -307,17 +340,23 @@ function Page({ section, state, refresh, notify }: Props) {
           </div>
         )}
         {section === 'instructions' && (
-          <WillBuilder
-            notify={notify}
-            save={(content) =>
-              mutate('instructions', 'POST', {
-                title: 'พินัยกรรมฉบับร่าง',
-                category: 'will',
-                content,
-                status: 'draft',
-              })
-            }
+          <WillJourney
+            ref={willJourneyRef}
+            documents={state.documents || []}
+            assets={state.assets || []}
+            contacts={state.contacts || []}
+            saveReview={(review) => mutate('profile', 'PATCH', { willReviews: [...reviews.filter(r => r.id !== review.id), review] })}
+            addNote={() => setEditing({})}
           />
+        )}
+        {section === 'instructions' && (
+          <section className="panel wp-review-list" aria-labelledby="saved-will-reviews">
+            <div className="wp-review-list-heading"><div><h2 id="saved-will-reviews">ผลตรวจพินัยกรรม</h2><p className="muted">ผลตรวจอ้างอิงจากคำตอบที่คุณให้ ไม่ใช่การรับรองเอกสาร</p></div><span className="tag">{reviews.length} รายการ</span></div>
+            {reviews.length ? reviews.map(review => {
+              const document = (state.documents || []).find((d: Row) => d.id === review.data.documentId);
+              return <div className="wp-review-list-row" key={review.id}><div><strong>{document?.name || 'ผลตรวจพินัยกรรม'}</strong><small className="wp-sub">{review.data.name || 'ยังไม่ระบุผู้ทำ'} · {review.data.form === 'handwritten' ? 'เขียนเองทั้งฉบับ' : review.data.form === 'ordinary' ? 'แบบธรรมดา' : 'ยังไม่ระบุประเภท'}</small></div><button type="button" className="btn btn-secondary btn-small" onClick={() => willJourneyRef.current?.openSavedReview(review)}>ดูผลตรวจทาน</button></div>;
+            }) : <p className="muted wp-review-empty">ยังไม่มีผลตรวจ เริ่มต้นได้จากปุ่ม “ตรวจพินัยกรรมที่มีอยู่” ด้านบน</p>}
+          </section>
         )}
         {isContact && (
           <div className="notice">
@@ -332,6 +371,9 @@ function Page({ section, state, refresh, notify }: Props) {
         )}
         {isAsset && (
           <InsuranceBuilder save={(data) => mutate('assets', 'POST', data)} />
+        )}
+        {isAsset && (
+          <DebtRegistry debts={state.profile?.debts || []} assets={state.assets || []} save={(debts) => mutate('profile', 'PATCH', { debts })} />
         )}
         {isAsset && (
           <div className="wp-summary panel">
@@ -352,6 +394,7 @@ function Page({ section, state, refresh, notify }: Props) {
             <span className="tag">{(state.assets || []).length} รายการ</span>
           </div>
         )}
+        {section === 'instructions' && <div className="wp-notes-heading"><h2>บันทึกความประสงค์และฉบับร่างเดิม</h2><p className="muted">ข้อความที่คุณบันทึกไว้ รวมถึงฉบับร่างที่สร้างก่อนหน้านี้</p></div>}
         <div className="panel">
           <div className="toolbar">
             <label className="search">
@@ -427,10 +470,10 @@ function Page({ section, state, refresh, notify }: Props) {
                         )}
                         <small className="wp-sub">
                           {isAsset
-                            ? x.reference
+                            ? x.category === 'insurance' && x.reference ? `••••${String(x.reference).slice(-4)}` : x.reference
                             : isContact
                               ? x.relationship
-                              : 'ความตั้งใจของคุณ'}
+                              : x.category === 'will' ? 'ฉบับร่างพินัยกรรม' : 'บันทึกความประสงค์'}
                         </small>
                       </td>
                       <td>
@@ -499,6 +542,7 @@ function Page({ section, state, refresh, notify }: Props) {
                       <select
                         name="category"
                         defaultValue={editing.category || 'property'}
+                        disabled={!!editing.insurance}
                       >
                         {Object.entries(categories).map(([k, v]) => (
                           <option key={k} value={k}>
@@ -514,11 +558,27 @@ function Page({ section, state, refresh, notify }: Props) {
                       defaultValue={editing.value || 0}
                     />
                   </div>
+                  {editing.insurance && <p className="muted">รายการกรมธรรม์มีข้อมูลเฉพาะ จึงไม่สามารถเปลี่ยนประเภทจากหน้านี้ได้</p>}
                   <Field
                     label="เลขอ้างอิง / ที่ตั้ง"
                     name="reference"
                     defaultValue={editing.reference}
                   />
+                  <details className="asset-planning-fields">
+                    <summary>ข้อมูลเพิ่มเติมสำหรับการส่งต่อ (ไม่บังคับ)</summary>
+                    <div className="stack">
+                      <p className="muted">ระบุเท่าที่ทราบ ข้อมูลนี้ช่วยเตรียมการตรวจ แต่ไม่ได้ยืนยันกรรมสิทธิ์หรือสิทธิรับมรดก</p>
+                      <div className="form-grid">
+                        <Field label="วันที่ประเมินมูลค่า" name="valuedAt" type="date" defaultValue={editing.valuedAt} />
+                        <label className="field">ลักษณะการถือครอง<select name="ownership" defaultValue={editing.ownership || ''}><option value="">ยังไม่ระบุ</option><option value="sole">ถือครองคนเดียว</option><option value="joint">ถือครองร่วม</option><option value="marital">สินสมรส</option><option value="unknown">ไม่แน่ใจ</option></select></label>
+                        <Field label="สัดส่วนที่เป็นของคุณ (%)" name="ownershipShare" type="number" defaultValue={editing.ownershipShare ?? ''} />
+                        <Field label="หนี้หรือภาระคงเหลือที่เกี่ยวข้อง (บาท)" name="debtOutstanding" type="number" defaultValue={editing.debtOutstanding ?? ''} />
+                      </div>
+                      <fieldset className="will-link-field asset-beneficiaries"><legend>ผู้รับที่ตั้งใจไว้</legend><p className="muted">เลือกบุคคลและระบุสัดส่วนถ้าทราบ การบันทึกนี้ไม่ใช่การแบ่งทรัพย์สินตามกฎหมาย</p>{(state.contacts || []).length ? state.contacts.map((person: Row) => <div className="asset-beneficiary" key={person.id}><label><input type="checkbox" name="beneficiaryIds" value={person.id} defaultChecked={(editing.beneficiaryIds || []).includes(person.id)} /> {person.name}</label><label className="field">สัดส่วนของ {person.name} (%)<input type="number" min="0" max="100" step="any" name={`beneficiaryShare_${person.id}`} defaultValue={(editing.beneficiaryShares || []).find((share: Row) => share.contactId === person.id)?.share ?? ''} /></label></div>) : <p className="muted">เพิ่มบุคคลในหน้าคนสำคัญก่อน แล้วกลับมาเลือกได้</p>}</fieldset>
+                      <fieldset className="will-link-field"><legend>เอกสารที่เกี่ยวข้อง</legend>{(state.documents || []).length ? state.documents.map((doc: Row) => <label key={doc.id}><input type="checkbox" name="documentIds" value={doc.id} defaultChecked={(editing.documentIds || []).includes(doc.id)} /> {doc.name}</label>) : <p className="muted">ยังไม่มีเอกสารในคลัง</p>}</fieldset>
+                    </div>
+                  </details>
+                  {editing.insurance && <InsuranceEditFields policy={editing.insurance} />}
                   <label className="field">
                     สถานะข้อมูล
                     <select
@@ -1420,6 +1480,7 @@ function Tax({ userId }: { userId: string }) {
         title="จัดการภาษีของเจ้ามรดก"
         description="แยกภาษีในปีที่เสียชีวิต ภาษีของกองมรดกที่ยังไม่ได้แบ่ง และภาษีของผู้รับมรดก พร้อมติดตามเอกสารที่ต้องเตรียม"
       />
+      <InheritanceEstimator />
       <div className="tax-overview">
         <div className="tax-overview-copy">
           <ShieldCheck size={22} />

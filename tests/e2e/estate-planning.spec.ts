@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('owner prepares taxes, saves a will and records a life policy', async ({
+test('owner prepares taxes, reviews a will and records a life policy', async ({
   page,
 }) => {
   await page.goto('/');
@@ -16,32 +16,20 @@ test('owner prepares taxes, saves a will and records a life policy', async ({
   await page.reload();
   await expect(tax).toBeChecked();
   await page.goto('/app/instructions');
-  await page.getByLabel('ชื่อและนามสกุลผู้ทำพินัยกรรม').fill('ผู้ทำทดสอบ');
-  await page.getByLabel('วันที่จัดทำ').fill('2026-11-05');
-  await page.getByLabel('สถานที่จัดทำ').fill('กรุงเทพฯ');
-  await page
-    .getByLabel('ผู้ที่ประสงค์ให้เป็นผู้จัดการมรดก')
-    .fill('ผู้จัดการทดสอบ');
-  await page
-    .getByLabel('ทรัพย์สิน ผู้รับ และสัดส่วนที่ต้องการยกให้')
-    .fill('บ้านเลขที่ 1 ให้บุตรสาวทั้งหมด');
-  await page.getByRole('button', { name: 'สร้างฉบับร่างพินัยกรรม' }).click();
-  await expect(page.getByLabel('ทบทวนและแก้ไขฉบับร่าง')).toHaveValue(
-    /บ้านเลขที่ 1/,
-  );
-  const downloadEvent = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'ดาวน์โหลดฉบับร่าง (.txt)' }).click();
-  expect((await downloadEvent).suggestedFilename()).toBe(
-    'YooTor-will-draft.txt',
-  );
-  await page
-    .getByRole('button', { name: 'บันทึกพินัยกรรมฉบับร่าง', exact: true })
-    .click();
-  await expect(page.getByRole('status')).toContainText(
-    'บันทึกข้อมูลเรียบร้อยแล้ว',
-  );
+  await page.getByRole('button', { name: /ตรวจพินัยกรรมที่มีอยู่/ }).click();
+  await page.getByLabel('ประเภทพินัยกรรม').selectOption('ordinary');
+  await page.getByLabel('ชื่อผู้ทำพินัยกรรม', { exact: true }).fill('ผู้ทำทดสอบ');
+  await page.getByRole('button', { name: 'ถัดไป' }).click();
+  await page.getByLabel('ชื่อผู้เขียนหรือผู้พิมพ์').fill('ผู้เขียนทดสอบ');
+  await page.getByRole('button', { name: 'ถัดไป' }).click();
+  await page.getByRole('button', { name: 'บันทึกและตรวจทาน' }).click();
+  await expect(page.getByRole('heading', { name: 'มีประเด็นที่ควรตรวจเพิ่มเติม' })).toBeVisible();
   await page.reload();
-  await expect(page.locator('tbody')).toContainText('พินัยกรรมฉบับร่าง');
+  await expect(page.getByRole('heading', { name: 'ผลตรวจพินัยกรรม' })).toBeVisible();
+  await expect(page.getByText('ผู้ทำทดสอบ · แบบธรรมดา')).toBeVisible();
+  await page.getByRole('button', { name: 'ดูผลตรวจทาน' }).click();
+  await page.getByRole('button', { name: 'ดูหรือแก้ไขคำตอบ' }).click();
+  await expect(page.getByLabel('ชื่อผู้ทำพินัยกรรม', { exact: true })).toHaveValue('ผู้ทำทดสอบ');
   await page.goto('/app/assets');
   await page
     .getByText('รวบรวมกรมธรรม์ประกันชีวิต — เพิ่มข้อมูลกรมธรรม์')
@@ -64,7 +52,7 @@ test('owner prepares taxes, saves a will and records a life policy', async ({
     'บันทึกข้อมูลเรียบร้อยแล้ว',
   );
   await page.reload();
-  await expect(page.locator('tbody')).toContainText('POLICY-TEST-1');
+  await expect(page.locator('tbody')).toContainText('••••ST-1');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/app/instructions');
   expect(
