@@ -4,6 +4,14 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 describe('household security', () => {
+  it('validates sessions consistently and rejects them after logout', async () => {
+    const service = createService(await mkdtemp(join(tmpdir(), 'yootor-session-')));
+    const owner = await service.auth({ action: 'demo', role: 'OWNER' });
+    expect(await service.session(owner.token)).toMatchObject({ role: 'OWNER', demo: true });
+    await expect(service.session('invalid-token')).rejects.toMatchObject({ status: 401 });
+    await service.logout(owner.token);
+    await expect(service.session(owner.token)).rejects.toMatchObject({ status: 401 });
+  });
   it('isolates households and requires approval before family access, then revokes immediately', async () => {
     const service = createService(await mkdtemp(join(tmpdir(), 'saan-test-')));
     const owner = await service.auth({ action: 'demo', role: 'OWNER' });

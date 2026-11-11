@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -18,7 +17,6 @@ import {
 import { Brand, TreeArt } from "./brand";
 import "./auth-experience.css";
 export function AuthForm({ register = false }: { register?: boolean }) {
-  const router = useRouter();
   const [step, setStep] = useState(0),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -89,7 +87,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: values.name, consent: values.consent }),
         });
-      router.push(values.role === "FAMILY" ? "/app/family" : "/app");
+      window.location.assign(body.user?.role === "FAMILY" ? "/app/family" : "/app");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -106,7 +104,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
         body: JSON.stringify({ action: "demo", role: "OWNER" }),
       });
       if (!res.ok) throw new Error("เริ่มทดลองไม่ได้ กรุณาลองอีกครั้ง");
-      router.push("/app");
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Clear the anonymous router cache after signing in.
+      window.location.assign("/app");
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);

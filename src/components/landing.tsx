@@ -17,11 +17,9 @@ import {
   X,
   LoaderCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Brand, TreeArt } from "./brand";
 import "./landing.css";
-export function Landing() {
-  const router = useRouter();
+export function Landing({ signedIn = false }: { signedIn?: boolean }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [menu, setMenu] = useState(false);
@@ -46,6 +44,12 @@ export function Landing() {
     return () => observer.disconnect();
   }, []);
   async function demo() {
+    if (signedIn) {
+      // A full navigation avoids reusing a prefetched anonymous page after auth changes.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign('/app');
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -56,7 +60,8 @@ export function Landing() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "ไม่สามารถเริ่มทดลองได้");
-      router.push("/app");
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Clear the anonymous router cache after signing in.
+      window.location.assign('/app');
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -95,11 +100,11 @@ export function Landing() {
           </a>
         </nav>
         <div className="landing-header-actions">
-          <Link className="login-link" href="/login">
+          {!signedIn && <Link className="login-link" href="/login" prefetch={false}>
             เข้าสู่ระบบ
-          </Link>
-          <Link className="btn btn-primary" href="/register">
-            เริ่มวางแผน <ArrowUpRight size={16} />
+          </Link>}
+          <Link className="btn btn-primary" href={signedIn ? '/app' : '/register'} prefetch={false}>
+            {signedIn ? 'เข้าสู่พื้นที่ของคุณ' : 'เริ่มวางแผน'} <ArrowUpRight size={16} />
           </Link>
           <button
             className="btn mobile-menu"
@@ -139,17 +144,17 @@ export function Landing() {
               </span>
             </p>
             <div className="hero-buttons">
-              <Link className="btn btn-primary" href="/register">
-                เริ่มวางแผน <ArrowRight size={18} />
+              <Link className="btn btn-primary" href={signedIn ? '/app' : '/register'} prefetch={false}>
+                {signedIn ? 'เข้าสู่พื้นที่ของคุณ' : 'เริ่มวางแผน'} <ArrowRight size={18} />
               </Link>
-              <button
+              {!signedIn && <button
                 className="btn btn-secondary"
                 disabled={busy}
                 onClick={() => void demo()}
               >
                 {busy ? <LoaderCircle className="spin" size={17} /> : null}
                 ทดลองใช้งานระบบ <ArrowUpRight size={17} />
-              </button>
+              </button>}
             </div>
             {error && (
               <p role="alert" className="form-error">
@@ -208,8 +213,8 @@ export function Landing() {
               <br />
               ให้ทุกเรื่องสำคัญมีที่อยู่ที่คนข้างหลังหาเจอ
             </p>
-            <Link href="/register">
-              เริ่มเตรียมข้อมูลของคุณ <ArrowRight size={16} />
+            <Link href={signedIn ? '/app' : '/register'} prefetch={false}>
+              {signedIn ? 'กลับสู่พื้นที่ของคุณ' : 'เริ่มเตรียมข้อมูลของคุณ'} <ArrowRight size={16} />
             </Link>
           </div>
           <div className="journey-item">
@@ -222,7 +227,7 @@ export function Landing() {
               <br />
               ขั้นตอนและเอกสาร ช่วยให้รู้ว่าควรเริ่มจากตรงไหน
             </p>
-            <Link href="/login">
+            <Link href={signedIn ? '/app/family' : '/login'} prefetch={false}>
               พื้นที่สำหรับครอบครัว <ArrowRight size={16} />
             </Link>
           </div>
@@ -280,7 +285,7 @@ export function Landing() {
               disabled={busy}
               className="text-link"
             >
-              ลองสำรวจพื้นที่ของคุณ <ArrowRight size={17} />
+              {signedIn ? 'กลับสู่พื้นที่ของคุณ' : 'ลองสำรวจพื้นที่ของคุณ'} <ArrowRight size={17} />
             </button>
           </div>
           <div className="mini-dashboard">
@@ -372,8 +377,8 @@ export function Landing() {
           <Heart size={27} strokeWidth={1.4} />
           <h2>ให้ความห่วงใยของคุณ อยู่ต่อ</h2>
           <p>เริ่มเตรียมวันนี้ เพื่อวันข้างหน้าของคนที่คุณรัก</p>
-          <Link href="/register" className="btn btn-primary">
-            เริ่มวางแผน <ArrowRight size={17} />
+          <Link href={signedIn ? '/app' : '/register'} prefetch={false} className="btn btn-primary">
+            {signedIn ? 'เข้าสู่พื้นที่ของคุณ' : 'เริ่มวางแผน'} <ArrowRight size={17} />
           </Link>
         </section>
       </main>

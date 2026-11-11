@@ -42,7 +42,7 @@ const nav = [
   { id: 'checklist', name: navigationLabels.checklist, icon: ListChecks },
   { id: 'assistant', name: navigationLabels.assistant, icon: Sparkles },
 ];
-export function Workspace({ section }: { section: string }) {
+export function Workspace({ section, initialRole }: { section: string; initialRole: 'OWNER' | 'FAMILY' }) {
   const router = useRouter();
   const [state, setState] = useState<any>(null),
     [error, setError] = useState(''),
@@ -52,6 +52,7 @@ export function Workspace({ section }: { section: string }) {
   const refresh = useCallback(async () => {
     const response = await fetch('/api/state', { cache: 'no-store' });
     if (response.status === 401) {
+      setState(null);
       router.replace('/login');
       return;
     }
@@ -61,6 +62,11 @@ export function Workspace({ section }: { section: string }) {
   }, [router]);
   useEffect(() => {
     void refresh().catch((e) => setError(e.message));
+    const revalidate = (event: PageTransitionEvent) => {
+      if (event.persisted) void refresh().catch((e) => setError(e.message));
+    };
+    window.addEventListener('pageshow', revalidate);
+    return () => window.removeEventListener('pageshow', revalidate);
   }, [refresh]);
   useEffect(() => {
     if (!toast) return;
@@ -71,12 +77,17 @@ export function Workspace({ section }: { section: string }) {
     setMobile(false);
   }, [section]);
   async function logout() {
-    await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'logout' }),
-    });
-    router.push('/');
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logout' }),
+      });
+      if (!response.ok) throw new Error('ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง');
+      window.location.replace('/');
+    } catch {
+      setToast('ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง');
+    }
   }
   async function switchDemo() {
     setSwitching(true);
@@ -90,15 +101,15 @@ export function Workspace({ section }: { section: string }) {
         }),
       });
       if (!res.ok) throw new Error('ไม่สามารถเปลี่ยนบัญชีได้');
-      await refresh();
-      router.push('/app/family');
+      // Clear any pages prefetched under the previous role before navigating.
+      window.location.replace('/app/family');
     } catch (e) {
       setToast((e as Error).message);
     } finally {
       setSwitching(false);
     }
   }
-  const family = state?.user.role === 'FAMILY';
+  const family = (state?.user.role ?? initialRole) === 'FAMILY';
   const current = nav.find((n) => n.id === section);
   const visible = family
     ? nav.filter((n) =>
@@ -133,6 +144,7 @@ export function Workspace({ section }: { section: string }) {
             <Link
               key={n.id}
               href={`/app/${n.id === 'dashboard' ? '' : n.id}`}
+              prefetch={false}
               className={`nav-item ${section === n.id ? 'active' : ''} ${n.group ? 'nav-group' : ''}`}
               aria-current={section === n.id ? 'page' : undefined}
             >

@@ -348,6 +348,8 @@ test('mock account autofill populates auth forms and only signs in after confirm
   await expect(
     page.getByRole('button', { name: 'ทดลองมุมมองครอบครัว', exact: true }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'ออกจากระบบ' }).click();
+  await expect(page).toHaveURL(/\/$/);
   await page.goto('/register');
   await page
     .getByRole('button', { name: 'กรอกข้อมูลตัวอย่าง', exact: true })

@@ -758,6 +758,11 @@ export function createService(
         db.sessions = db.sessions.filter((s) => s.hash !== digest(token));
         return { ok: true };
       }),
+    session: async (token: string) =>
+      transaction((db) => {
+        const { user } = identify(db, token);
+        return { id: user.id, role: user.role, demo: user.demo };
+      }, false),
     state: async (token: string) =>
       transaction((db) => {
         const { user, home } = identify(db, token);

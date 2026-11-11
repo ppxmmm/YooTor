@@ -1,4 +1,6 @@
 import { Landing } from '@/components/landing';
-export default function Page() {
-  return <Landing />;
+import { pageSession } from '@/lib/page-session';
+export default async function Page() {
+  const session = await pageSession();
+  return <Landing signedIn={!!session} />;
 }
