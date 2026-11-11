@@ -26,7 +26,8 @@ import {
 } from 'lucide-react';
 import './workspace-pages.css';
 import { InsuranceBuilder } from './insurance-builder';
-import { InsuranceEditFields } from './insurance-edit-fields';
+import { AllocationOverview } from './allocation-overview';
+import { InsuranceEditFields, LegacyInsuranceConverter } from './insurance-edit-fields';
 import { DebtRegistry } from './debt-registry';
 import { InheritanceEstimator } from './inheritance-estimator';
 import { WillJourney, type WillJourneyHandle } from './will-journey';
@@ -271,7 +272,7 @@ function Page({ section, state, refresh, notify }: Props) {
         return;
       }
       body.documentIds = new FormData(e.currentTarget).getAll('documentIds');
-      if (editing?.insurance) {
+      if (editing?.insurance || new FormData(e.currentTarget).get('convertPolicy') === 'yes') {
         const form = new FormData(e.currentTarget);
         const names = form.getAll('policyBeneficiaryName').map(String);
         const relationships = form.getAll('policyBeneficiaryRelationship').map(String);
@@ -347,6 +348,8 @@ function Page({ section, state, refresh, notify }: Props) {
             contacts={state.contacts || []}
             saveReview={(review) => mutate('profile', 'PATCH', { willReviews: [...reviews.filter(r => r.id !== review.id), review] })}
             addNote={() => setEditing({})}
+            saveDraft={(content) => mutate('instructions', 'POST', { title: 'พินัยกรรมฉบับร่าง', category: 'will', content, status: 'draft' })}
+            notify={notify}
           />
         )}
         {section === 'instructions' && (
@@ -369,6 +372,7 @@ function Page({ section, state, refresh, notify }: Props) {
             </span>
           </div>
         )}
+        {isAsset && <AllocationOverview assets={state.assets || []} contacts={state.contacts || []} edit={asset => setEditing(asset)} />}
         {isAsset && (
           <InsuranceBuilder save={(data) => mutate('assets', 'POST', data)} />
         )}
@@ -394,6 +398,7 @@ function Page({ section, state, refresh, notify }: Props) {
             <span className="tag">{(state.assets || []).length} รายการ</span>
           </div>
         )}
+        {isAsset && <details className="panel"><summary>ประวัติการเปลี่ยนแปลงทรัพย์สินและผู้รับ ({(state.profile?.assetHistory || []).length})</summary><p className="muted">เริ่มบันทึกเมื่อมีการแก้ไขหลังเปิดใช้ เก็บสูงสุด 100 ครั้งล่าสุด และลบประวัติของรายการเมื่อลบทรัพย์สิน</p>{(state.profile?.assetHistory || []).map((entry: Row) => <div className="wp-request" key={entry.id}><div><strong>{entry.after.name || 'ทรัพย์สิน'}</strong><p className="muted">{new Date(entry.at).toLocaleString('th-TH')}</p><p>มูลค่า: {money(entry.before.value || 0)} → {money(entry.after.value || 0)}</p><p>การถือครอง: {entry.before.ownership || 'ยังไม่ระบุ'} ({entry.before.ownershipShare ?? '—'}%) → {entry.after.ownership || 'ยังไม่ระบุ'} ({entry.after.ownershipShare ?? '—'}%)</p><p>ผู้รับที่ตั้งใจไว้: {(entry.before.beneficiaryIds || []).map((id: string) => (state.contacts || []).find((c: Row) => c.id === id)?.name || 'บุคคลที่ลบแล้ว').join(', ') || 'ยังไม่ระบุ'} → {(entry.after.beneficiaryIds || []).map((id: string) => (state.contacts || []).find((c: Row) => c.id === id)?.name || 'บุคคลที่ลบแล้ว').join(', ') || 'ยังไม่ระบุ'}</p><p>สัดส่วนผู้รับ (%): {(entry.before.beneficiaryShares || []).map((share: Row) => `${(state.contacts || []).find((c: Row) => c.id === share.contactId)?.name || 'บุคคลที่ลบแล้ว'} ${share.share}%`).join(', ') || 'ยังไม่ระบุ'} → {(entry.after.beneficiaryShares || []).map((share: Row) => `${(state.contacts || []).find((c: Row) => c.id === share.contactId)?.name || 'บุคคลที่ลบแล้ว'} ${share.share}%`).join(', ') || 'ยังไม่ระบุ'}</p></div></div>)}</details>}
         {section === 'instructions' && <div className="wp-notes-heading"><h2>บันทึกความประสงค์และฉบับร่างเดิม</h2><p className="muted">ข้อความที่คุณบันทึกไว้ รวมถึงฉบับร่างที่สร้างก่อนหน้านี้</p></div>}
         <div className="panel">
           <div className="toolbar">
@@ -564,7 +569,7 @@ function Page({ section, state, refresh, notify }: Props) {
                     name="reference"
                     defaultValue={editing.reference}
                   />
-                  <details className="asset-planning-fields">
+                  <details className="asset-planning-fields" open>
                     <summary>ข้อมูลเพิ่มเติมสำหรับการส่งต่อ (ไม่บังคับ)</summary>
                     <div className="stack">
                       <p className="muted">ระบุเท่าที่ทราบ ข้อมูลนี้ช่วยเตรียมการตรวจ แต่ไม่ได้ยืนยันกรรมสิทธิ์หรือสิทธิรับมรดก</p>
@@ -579,6 +584,7 @@ function Page({ section, state, refresh, notify }: Props) {
                     </div>
                   </details>
                   {editing.insurance && <InsuranceEditFields policy={editing.insurance} />}
+                  {editing.id && editing.category === 'insurance' && !editing.insurance && <LegacyInsuranceConverter notes={editing.notes || ''} />}
                   <label className="field">
                     สถานะข้อมูล
                     <select
@@ -1143,6 +1149,7 @@ function Family({
                     {r.ownerEmail && `เจ้าของข้อมูล: ${r.ownerEmail}`}
                   </p>
                   <span className="tag">{statuses[r.status] || r.status}</span>
+                  {state.user?.demo && <div className="stack"><p className="muted">หลักฐานจำลองเท่านั้น ห้ามใช้ข้อมูลหรือเอกสารจริง · PDF, PNG, JPEG ไม่เกิน 2 MB สูงสุด 3 ไฟล์</p>{(r.evidence || []).map((file: Row) => <a key={file.id} href={`/api/request-evidence/${r.id}/${file.id}`} download>{file.name}</a>)}{state.user.role === 'FAMILY' && !['approved', 'rejected', 'revoked'].includes(r.status) && (r.evidence || []).length < 3 && <form onSubmit={async e => { e.preventDefault(); const form = e.currentTarget; try { await mutate(`request-evidence/${r.id}`, 'POST', new FormData(form)); form.reset(); } catch { /* shared handler displays errors */ } }}><label className="field">เพิ่มหลักฐานตัวอย่าง<input type="file" name="file" accept="application/pdf,image/png,image/jpeg" required /></label><button className="btn btn-secondary btn-small" disabled={busy}>อัปโหลดหลักฐานตัวอย่าง</button></form>}</div>}
                   {r.status === 'approved' && (
                     <p>
                       อนุญาตเฉพาะ:{' '}
@@ -1216,7 +1223,7 @@ function Family({
           </div>
         )}
       {selected && (
-        <Modal title="ตรวจสอบคำขอเข้าถึง" close={() => setSelected(null)}>
+        <Modal title={state.user?.demo ? "จำลองการตรวจสอบคำขอ" : "ตรวจสอบคำขอเข้าถึง"} close={() => setSelected(null)}>
           <form
             className="stack"
             onSubmit={async (e) => {
@@ -1238,6 +1245,7 @@ function Family({
               ผู้ขอ:{' '}
               {selected.requesterEmail || selected.email || 'บุคคลในครอบครัว'}
             </p>
+            {state.user?.demo && <p className="muted">นี่เป็นการจำลองโดยเจ้าของข้อมูล ยังไม่มีเจ้าหน้าที่หรือการยืนยันตัวตนจริง</p>}
             <label className="field">
               ผลการตรวจสอบ
               <select

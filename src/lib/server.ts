@@ -52,6 +52,9 @@ export class ApiError extends Error {
 const empty = (): DB => ({ users: [], sessions: [], households: [] });
 const text = z.string().trim().max(4000);
 const emailAddress = z.string().trim().toLowerCase().max(254).pipe(z.email());
+function publicRequest(row: Row): Row {
+  return { ...row, evidence: Array.isArray(row.evidence) ? row.evidence.map((item: Row) => publicDocument(item)) : [] };
+}
 function publicDocument<T extends Record<string, unknown>>(row: T): T {
   const safe = { ...row };
   Reflect.deleteProperty(safe, 'content');
@@ -784,8 +787,8 @@ export function createService(
             : [],
           contacts: owner ? home.contacts : [],
           requests: owner
-            ? home.requests
-            : home.requests.filter((r) => r.userId === user.id),
+            ? home.requests.map(publicRequest)
+            : home.requests.filter((r) => r.userId === user.id).map(publicRequest),
           tasks: home.tasks.filter((t) =>
             owner ? !t.userId || t.userId === user.id : t.userId === user.id,
           ),
@@ -889,7 +892,7 @@ export function createService(
           if (body.permissions !== undefined)
             row.permissions = permissions.parse(body.permissions);
           activity(home, 'เจ้าของตรวจสอบสิทธิ์การเข้าถึง: ' + row.status);
-          return row;
+          return publicRequest(row);
         }
         if (user.role !== 'OWNER' && resource === 'tasks') {
           if (method !== 'PATCH')
@@ -943,6 +946,8 @@ export function createService(
         if (method === 'DELETE') {
           if (index < 0) throw new ApiError(404, 'ไม่พบข้อมูล');
           rows.splice(index, 1);
+          if (resource === 'assets' && Array.isArray(home.profile.assetHistory))
+            home.profile.assetHistory = home.profile.assetHistory.filter((entry: Row) => entry.assetId !== id);
           activity(home, 'ลบข้อมูล ' + resource);
           return { id };
         }
@@ -963,6 +968,19 @@ export function createService(
             throw new ApiError(400, 'ไม่พบเอกสารที่เลือกในบัญชีนี้');
         }
         const row = { ...data, id: method === 'PATCH' ? id : randomUUID() };
+        if (resource === 'assets' && method === 'PATCH') {
+          const snapshot = (asset: Row) => ({
+            name: asset.name || '', value: asset.value ?? null,
+            ownership: asset.ownership || '', ownershipShare: asset.ownershipShare ?? null,
+            beneficiaryIds: asset.beneficiaryIds || [], beneficiaryShares: asset.beneficiaryShares || [],
+          });
+          const before = snapshot(rows[index]);
+          const after = snapshot(row);
+          if (JSON.stringify(before) !== JSON.stringify(after)) {
+            const history = Array.isArray(home.profile.assetHistory) ? home.profile.assetHistory : [];
+            home.profile.assetHistory = [{ id: randomUUID(), assetId: id, at: new Date().toISOString(), before, after }, ...history].slice(0, 100);
+          }
+        }
         if (method === 'PATCH') rows[index] = row;
         else rows.push(row);
         activity(home, 'บันทึกข้อมูล ' + resource);
@@ -1023,6 +1041,31 @@ export function createService(
         activity(home, 'เพิ่มเอกสาร ' + name);
         return publicDocument(row);
       }),
+    uploadRequestEvidence: async (token: string, requestId: string, file: {name: string; bytes: Buffer}) =>
+      transaction((db) => {
+        const { user, home } = identify(db, token);
+        if (!user.demo || user.role !== 'FAMILY') throw new ApiError(403, 'ใช้ได้เฉพาะสมาชิกครอบครัวในโหมดทดลอง');
+        const request = home.requests.find(r => r.id === requestId && r.userId === user.id);
+        if (!request || ['approved', 'rejected', 'revoked'].includes(String(request.status))) throw new ApiError(404, 'ไม่พบคำขอที่เปิดรับหลักฐาน');
+        const evidence = Array.isArray(request.evidence) ? request.evidence as Row[] : [];
+        if (evidence.length >= 3 || file.bytes.length > 2 * 1024 * 1024) throw new ApiError(413, 'เพิ่มได้ไม่เกิน 3 ไฟล์ ไฟล์ละไม่เกิน 2 MB');
+        const pdf = file.bytes.subarray(0, 5).toString() === '%PDF-' && /%%EOF\s*$/.test(file.bytes.subarray(-1024).toString());
+        const png = file.bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && file.bytes.subarray(-8, -4).toString() === 'IEND';
+        const jpeg = file.bytes[0] === 255 && file.bytes[1] === 216 && file.bytes[2] === 255 && file.bytes.at(-2) === 255 && file.bytes.at(-1) === 217;
+        if (!pdf && !png && !jpeg) throw new ApiError(422, 'รองรับไฟล์ PDF, PNG หรือ JPEG เท่านั้น');
+        const row = { id: randomUUID(), name: z.string().trim().min(1).max(255).parse(file.name).replace(/[^\p{L}\p{N} ._-]/gu, '_').slice(0, 150), mime: pdf ? 'application/pdf' : png ? 'image/png' : 'image/jpeg', size: file.bytes.length, content: file.bytes.toString('base64'), createdAt: new Date().toISOString() };
+        request.evidence = [...evidence, row];
+        return publicDocument(row);
+      }),
+    downloadRequestEvidence: async (token: string, requestId: string, evidenceId: string) =>
+      transaction((db) => {
+        const { user, home } = identify(db, token);
+        if (!user.demo) throw new ApiError(403, 'ใช้ได้เฉพาะโหมดทดลอง');
+        const request = home.requests.find(r => r.id === requestId && (user.role === 'OWNER' || r.userId === user.id));
+        const evidence = request && Array.isArray(request.evidence) ? (request.evidence as Row[]).find(e => e.id === evidenceId) : undefined;
+        if (!evidence) throw new ApiError(404, 'ไม่พบหลักฐาน');
+        return { bytes: Buffer.from(String(evidence.content), 'base64'), mime: String(evidence.mime), name: String(evidence.name) };
+      }, false),
     download: async (token: string, id: string) =>
       transaction((db) => {
         const { user, home } = identify(db, token);

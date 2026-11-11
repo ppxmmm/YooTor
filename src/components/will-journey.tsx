@@ -3,6 +3,8 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { emptyWillReview, type SavedWillReview } from '@/lib/will-review';
 import { WillReviewPanel } from './will-review';
+import { WillBuilder } from './will-builder';
+import type { PlanAsset } from '@/lib/allocation';
 
 type Document = { id: string; name: string };
 type Item = { id: string; name: string };
@@ -18,11 +20,12 @@ function DiscardDialog({ cancel, discard }: { cancel: () => void; discard: () =>
   </dialog>;
 }
 
-export function WillJourney({ documents, assets, contacts, saveReview, addNote, ref }: {
-  documents: Document[]; assets: Item[]; contacts: Item[];
+export function WillJourney({ documents, assets, contacts, saveReview, addNote, saveDraft, notify, ref }: {
+  documents: Document[]; assets: PlanAsset[]; contacts: Item[];
   saveReview: (review: SavedWillReview) => Promise<unknown>;
-  addNote: () => void; ref?: Ref<WillJourneyHandle>;
+  addNote: () => void; saveDraft: (content: string) => Promise<unknown>; notify: (message: string) => void; ref?: Ref<WillJourneyHandle>;
 }) {
+  const [building, setBuilding] = useState(false);
   const [active, setActive] = useState<SavedWillReview | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [version, setVersion] = useState(0);
@@ -36,13 +39,16 @@ export function WillJourney({ documents, assets, contacts, saveReview, addNote, 
   }, [version, active, showSaved]);
   function navigate(action: () => void) { if (dirty) setPending(() => action); else action(); }
   function open(review: SavedWillReview, saved: boolean) {
-    navigate(() => { setActive(review); setShowSaved(saved); setDirty(false); setVersion(v => v + 1); scroll.current = true; });
+    navigate(() => { setBuilding(false); setActive(review); setShowSaved(saved); setDirty(false); setVersion(v => v + 1); scroll.current = true; });
   }
   useImperativeHandle(ref, () => ({ openSavedReview: review => open(review, true) }));
   return <section className="will-journey" aria-label="พินัยกรรมและความประสงค์">
     <div className="panel will-journey-intro">
-      <div><h2>เริ่มจากสิ่งที่คุณต้องการทำ</h2><p className="muted">เลือกตรวจพินัยกรรมที่มีอยู่ หรือบันทึกสิ่งที่อยากบอกคนใกล้ชิด</p></div>
+      <div><h2>เริ่มจากสิ่งที่คุณต้องการทำ</h2><p className="muted">เลือกเตรียมฉบับร่าง ตรวจพินัยกรรมที่มีอยู่ หรือบันทึกความประสงค์</p></div>
       <div className="will-journey-choices">
+        <button type="button" className="will-journey-choice" onClick={() => navigate(() => { setActive(null); setBuilding(true); })}>
+          <strong>เตรียมฉบับร่างพินัยกรรม</strong><span>นำแผนทรัพย์สินและผู้รับที่บันทึกไว้มาช่วยเตรียมข้อความ</span><span className="will-journey-link">เริ่มเตรียมฉบับร่าง →</span>
+        </button>
         <button type="button" className="will-journey-choice" onClick={() => open({ id: crypto.randomUUID(), data: { ...emptyWillReview } }, false)}>
           <strong>ตรวจพินัยกรรมที่มีอยู่</strong><span>ตอบคำถามเพื่อดูข้อมูลที่ยังขาดและประเด็นที่ควรตรวจเพิ่มเติม</span><span className="will-journey-link">เริ่มตรวจพินัยกรรม →</span>
         </button>
@@ -51,6 +57,7 @@ export function WillJourney({ documents, assets, contacts, saveReview, addNote, 
         </button>
       </div>
     </div>
+    {building && <WillBuilder assets={assets} contacts={contacts} save={saveDraft} notify={notify} />}
     {active && <div>
       <WillReviewPanel key={version} initial={active.data} documents={documents} assets={assets} contacts={contacts} save={data => saveReview({ id: active.id, data })} showSavedResult={showSaved} onDirtyChange={setDirty} />
     </div>}

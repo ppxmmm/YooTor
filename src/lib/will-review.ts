@@ -17,11 +17,13 @@ export const willReviewSchema = z.object({
   beneficiaryConflict: answer,
   alterations: answer,
   alterationsSigned: answer,
+  alterationsHandwritten: answer.optional(),
+  writerRelationship: z.string().trim().max(200).optional(),
   uncertainty: answer,
   writerName: z.string().trim().max(200).optional(),
   witnessNames: z.array(z.string().trim().max(200)).max(10).optional(),
   courtOrder: answer.optional(),
-  witnesses: z.array(z.object({ birthDate: z.string().max(10), signedTogether: answer, spouseOfBeneficiary: answer })).max(10).optional(),
+  witnesses: z.array(z.object({ birthDate: z.string().max(10), signedTogether: answer, spouseOfBeneficiary: answer, eligibility: answer.optional() })).max(10).optional(),
   beneficiaryIds: z.array(z.string().max(100)).max(50).optional(),
   assetIds: z.array(z.string().max(100)).max(50).optional(),
 });
@@ -74,6 +76,7 @@ export function reviewWill(input: WillReview): Finding[] {
     if (!input.beneficiaryConflict || input.beneficiaryConflict === 'unknown') missing('ความเกี่ยวข้องของผู้รับกับพยานหรือผู้เขียน');
     else if (input.beneficiaryConflict === 'yes') findings.push({label:'ผู้รับเกี่ยวข้องกับพยานหรือผู้เขียน',detail:'อาจมีข้อกำหนดบางส่วนที่ต้องตรวจเพิ่มเติม ไม่ได้สรุปผลทั้งฉบับ',level:'review',reference:'อ้างอิงตาม baseline: ม. 1653'});
     for (const [index, witness] of (input.witnesses || []).entries()) {
+      if (witness.eligibility === 'no') findings.push({label:`คุณสมบัติพยานคนที่ ${index + 1}`,detail:'มีข้อสงสัยเกี่ยวกับคุณสมบัติพยาน ควรให้ผู้เชี่ยวชาญตรวจเพิ่มเติม',level:'review'});
       if (witness.signedTogether === 'no') findings.push({label:`การลงชื่อพยานคนที่ ${index + 1}`,detail:'ควรตรวจขั้นตอนการลงชื่อกับผู้เชี่ยวชาญ',level:'review',reference:'อ้างอิงตาม baseline: ม. 1656'});
       if (witness.spouseOfBeneficiary === 'yes') findings.push({label:`ความเกี่ยวข้องของพยานคนที่ ${index + 1}`,detail:'ควรตรวจความเกี่ยวข้องกับผู้รับและข้อกำหนดที่เกี่ยวข้อง',level:'review',reference:'อ้างอิงตาม baseline: ม. 1653'});
       if (witness.birthDate && input.signedDate && witness.birthDate > input.signedDate) findings.push({label:`วันเกิดพยานคนที่ ${index + 1}`,detail:'วันเกิดอยู่หลังวันที่ทำพินัยกรรม กรุณาตรวจข้อมูลอีกครั้ง',level:'review'});
@@ -81,6 +84,7 @@ export function reviewWill(input: WillReview): Finding[] {
   }
   if (!input.alterations || input.alterations === 'unknown') missing('การแก้ไขในเอกสาร');
   else if (input.alterations === 'yes') {
+    if (input.form === 'handwritten') check(input.alterationsHandwritten || '', 'การแก้ไขด้วยลายมือผู้ทำ', 'ควรตรวจวิธีแก้ไขกับผู้เชี่ยวชาญ');
     if (!input.alterationsSigned || input.alterationsSigned === 'unknown') missing('การลงนามกำกับจุดแก้ไข');
     else if (input.alterationsSigned === 'no') findings.push({label:'การแก้ไขในเอกสาร',detail:'ควรให้ผู้เชี่ยวชาญตรวจทุกจุดที่แก้ไข กฎสำหรับแต่ละแบบอาจต่างกัน',level:'review'});
   }

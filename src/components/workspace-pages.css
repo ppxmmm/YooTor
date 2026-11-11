@@ -843,3 +843,14 @@ button:disabled {
 .asset-beneficiary .field { font-size: 12px; }
 @media (max-width: 600px) { .asset-beneficiary { grid-template-columns: 1fr; } }
 .asset-beneficiary .field input { width: 100%; min-width: 0; }
+.allocation-overview { margin: 18px 0; }
+.allocation-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.allocation-heading h2 { margin-bottom: 6px; }
+.allocation-list { margin: 16px 0; border-top: 1px solid #e4ece8; }
+.allocation-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid #e4ece8; }
+.allocation-row h3 { font-size: 16px; margin: 0 0 4px; }
+.allocation-row p { margin: 0; }
+.allocation-row ul { padding-left: 20px; margin: 8px 0 0; }
+@media (max-width: 600px) { .allocation-heading, .allocation-row { flex-direction: column; align-items: flex-start; } }
+.allocation-choice { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; }
+@media (max-width: 600px) { .allocation-choice { flex-direction: column; gap: 2px; } }
