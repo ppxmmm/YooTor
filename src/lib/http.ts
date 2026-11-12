@@ -84,6 +84,20 @@ export async function endpoint(
         : error instanceof ZodError || error instanceof SyntaxError
           ? 422
           : 500;
+    if (status === 500) {
+      const details = error && typeof error === 'object' ? error : {};
+      const candidate =
+        'code' in details ? details.code : 'errorCode' in details ? details.errorCode : undefined;
+      const code =
+        typeof candidate === 'string' && /^[A-Z0-9_]{1,32}$/.test(candidate)
+          ? candidate
+          : undefined;
+      console.error('API request failed', {
+        path: req.nextUrl.pathname,
+        errorType: error instanceof Error ? error.constructor.name : 'UnknownError',
+        code,
+      });
+    }
     return NextResponse.json(
       {
         error:
