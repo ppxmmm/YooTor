@@ -12,6 +12,7 @@ import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { checklist, samplePdf } from './checklist';
+import { Prisma } from '@prisma/client';
 
 type Row = Record<string, unknown> & { id: string };
 type User = {
@@ -373,48 +374,48 @@ export function createService(
             },
           },
         });
-      for (const h of db.households) {
-        const ciphertext = (await encrypt(JSON.stringify(h.profile))).toString(
-          'base64',
-        );
-        await pg.household.upsert({
-          where: { id: h.id },
-          create: { id: h.id, ciphertext },
-          update: { ciphertext },
-        });
-      }
-      for (const u of db.users) {
-        const data = {
-          householdId: u.household,
-          ciphertext: (await encrypt(JSON.stringify(u))).toString('base64'),
-        };
-        await pg.user.upsert({
-          where: { id: u.id },
-          create: { id: u.id, ...data },
-          update: data,
-        });
-      }
-      for (const session of db.sessions) {
-        const data = {
-          userId: session.userId,
-          expires: new Date(session.expires),
-        };
-        await pg.session.upsert({
-          where: { hash: session.hash },
-          create: { hash: session.hash, ...data },
-          update: data,
-        });
-      }
-      for (const { row, kind, householdId } of rows) {
-        const data = {
-          householdId,
+      const houses = await Promise.all(db.households.map(async (h) => ({
+        id: h.id,
+        ciphertext: (await encrypt(JSON.stringify(h.profile))).toString('base64'),
+      })));
+      if (houses.length) await pg.$executeRaw`
+        INSERT INTO "Household" (id, ciphertext)
+        SELECT id, ciphertext FROM jsonb_to_recordset(${JSON.stringify(houses)}::jsonb)
+          AS x(id text, ciphertext text)
+        ON CONFLICT (id) DO UPDATE SET ciphertext = EXCLUDED.ciphertext`;
+      const users = await Promise.all(db.users.map(async (u) => ({
+        id: u.id, householdId: u.household,
+        ciphertext: (await encrypt(JSON.stringify(u))).toString('base64'),
+      })));
+      if (users.length) await pg.$executeRaw`
+        INSERT INTO "User" (id, "householdId", ciphertext)
+        SELECT id, "householdId", ciphertext FROM jsonb_to_recordset(${JSON.stringify(users)}::jsonb)
+          AS x(id text, "householdId" text, ciphertext text)
+        ON CONFLICT (id) DO UPDATE SET "householdId" = EXCLUDED."householdId", ciphertext = EXCLUDED.ciphertext`;
+      const sessions = db.sessions.map((s) => ({ ...s, expires: new Date(s.expires).toISOString() }));
+      if (sessions.length) await pg.$executeRaw`
+        INSERT INTO "Session" (hash, "userId", expires)
+        SELECT hash, "userId", expires FROM jsonb_to_recordset(${JSON.stringify(sessions)}::jsonb)
+          AS x(hash text, "userId" text, expires timestamp)
+        ON CONFLICT (hash) DO UPDATE SET "userId" = EXCLUDED."userId", expires = EXCLUDED.expires`;
+      const tables = {
+        assets: 'Asset', contacts: 'Contact', documents: 'Document',
+        instructions: 'Instruction', requests: 'AccessRequest',
+        tasks: 'ChecklistTask', activities: 'AuditActivity',
+      } as const;
+      for (const kind of kinds) {
+        const batch = await Promise.all(rows.filter((r) => r.kind === kind).map(async ({row, householdId}) => ({
+          id: row.id, householdId,
           ciphertext: (await encrypt(JSON.stringify(row))).toString('base64'),
-        };
-        await resourceTables(pg)[kind].upsert({
-          where: { id: row.id },
-          create: { id: row.id, ...data },
-          update: data,
-        });
+        })));
+        if (!batch.length) continue;
+        // The identifier comes exclusively from the fixed table mapping above.
+        const table = Prisma.raw(`"${tables[kind]}"`);
+        await pg.$executeRaw`
+          INSERT INTO ${table} (id, "householdId", ciphertext)
+          SELECT id, "householdId", ciphertext FROM jsonb_to_recordset(${JSON.stringify(batch)}::jsonb)
+            AS x(id text, "householdId" text, ciphertext text)
+          ON CONFLICT (id) DO UPDATE SET "householdId" = EXCLUDED."householdId", ciphertext = EXCLUDED.ciphertext`;
       }
       return;
     }
