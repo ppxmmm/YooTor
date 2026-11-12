@@ -435,16 +435,42 @@ export function createService(
           'การใช้งานจริงต้องใช้ PostgreSQL และตั้งค่าการยืนยันตัวตน',
         );
       if (process.env.DATABASE_URL) {
-        return (await database()).$transaction(
-          async (client) => {
-            await client.$executeRaw`SELECT pg_advisory_xact_lock(734922601)`;
-            const db = await load(client);
-            const result = await fn(db);
-            if (write) await save(db, client);
-            return result;
-          },
-          { timeout: 20000 },
-        );
+        const started = Date.now();
+        let stage = 'acquire';
+        try {
+          return await (await database()).$transaction(
+            async (client) => {
+              stage = 'lock';
+              await client.$executeRaw`SELECT pg_advisory_xact_lock(734922601)`;
+              stage = 'load';
+              const db = await load(client);
+              stage = 'process';
+              const result = await fn(db);
+              if (write) {
+                stage = 'save';
+                await save(db, client);
+              }
+              stage = 'commit';
+              return result;
+            },
+            { timeout: 20000 },
+          );
+        } catch (error) {
+          if (error && typeof error === 'object' && 'code' in error && error.code === 'P2028') {
+            const message = error instanceof Error ? error.message : '';
+            const reason = /expired|timeout|timed out/i.test(message)
+              ? 'timeout'
+              : /unable to start|unable to acquire/i.test(message)
+                ? 'acquisition'
+                : /closed/i.test(message) ? 'closed' : 'other';
+            console.error('Database transaction failed', {
+              stage,
+              reason,
+              elapsedMs: Date.now() - started,
+            });
+          }
+          throw error;
+        }
       }
       const db = await load();
       const result = await fn(db);
