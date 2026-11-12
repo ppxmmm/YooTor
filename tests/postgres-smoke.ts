@@ -30,6 +30,8 @@ async function main() {
         ?.value,
       1234,
     );
+    assert.equal((await reloaded.state(other.token)).assets.some((a) => a.id === asset.id), false);
+    await assert.rejects(reloaded.state('invalid-token'));
     await assert.rejects(
       first.mutate(other.token, 'assets', 'PATCH', {
         id: asset.id,

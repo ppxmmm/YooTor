@@ -346,6 +346,50 @@ export function createService(
       throw error;
     }
   }
+  async function loadCurrentHousehold(token: string): Promise<DB> {
+    const pg = await database();
+    const rows = await pg.$queryRaw<Array<{
+      householdId: string; userCiphertext: string; expires: Date;
+      kind: string; ciphertext: string;
+    }>>`
+      WITH auth AS (
+        SELECT h.id AS "householdId", h.ciphertext AS profile,
+               u.ciphertext AS "userCiphertext", s.expires
+        FROM "Session" s
+        JOIN "User" u ON u.id = s."userId"
+        JOIN "Household" h ON h.id = u."householdId"
+        WHERE s.hash = ${digest(token)} AND s.expires > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+      )
+      SELECT auth."householdId", auth."userCiphertext", auth.expires, data.kind, data.ciphertext
+      FROM auth CROSS JOIN LATERAL (
+        SELECT 'profile' AS kind, auth.profile AS ciphertext
+        UNION ALL SELECT 'assets', ciphertext FROM "Asset" WHERE "householdId" = auth."householdId"
+        UNION ALL SELECT 'contacts', ciphertext FROM "Contact" WHERE "householdId" = auth."householdId"
+        UNION ALL SELECT 'documents', ciphertext FROM "Document" WHERE "householdId" = auth."householdId"
+        UNION ALL SELECT 'instructions', ciphertext FROM "Instruction" WHERE "householdId" = auth."householdId"
+        UNION ALL SELECT 'requests', ciphertext FROM "AccessRequest" WHERE "householdId" = auth."householdId"
+        UNION ALL SELECT 'tasks', ciphertext FROM "ChecklistTask" WHERE "householdId" = auth."householdId"
+        UNION ALL SELECT 'activities', ciphertext FROM "AuditActivity" WHERE "householdId" = auth."householdId"
+      ) data`;
+    if (!rows.length) throw new ApiError(401, 'กรุณาเข้าสู่ระบบ');
+    const user = validateSessionUser(
+      JSON.parse(await decrypt(Buffer.from(rows[0].userCiphertext, 'base64'))) as User,
+    );
+    const home: Household = {
+      id: rows[0].householdId, profile: {}, assets: [], contacts: [],
+      documents: [], instructions: [], requests: [], tasks: [], activities: [],
+    };
+    for (const row of rows) {
+      const value = JSON.parse(await decrypt(Buffer.from(row.ciphertext, 'base64')));
+      if (row.kind === 'profile') home.profile = value;
+      else if (kinds.includes(row.kind as (typeof kinds)[number]))
+        home[row.kind as (typeof kinds)[number]].push(value);
+    }
+    return {
+      users: [user], households: [home],
+      sessions: [{ hash: digest(token), userId: user.id, expires: rows[0].expires.getTime() }],
+    };
+  }
   async function save(
     db: DB,
     client?: import('@prisma/client').Prisma.TransactionClient,
@@ -818,8 +862,8 @@ export function createService(
         return { id: user.id, role: user.role, demo: user.demo };
       }, false);
     },
-    state: async (token: string) =>
-      transaction((db) => {
+    state: async (token: string) => {
+      const project = (db: DB) => {
         const { user, home } = identify(db, token);
         const owner = user.role === 'OWNER';
         return {
@@ -847,7 +891,11 @@ export function createService(
           activities: owner ? home.activities : [],
           profile: owner ? home.profile : user.preferences || {},
         };
-      }, false),
+      };
+      return process.env.DATABASE_URL
+        ? project(await loadCurrentHousehold(token))
+        : transaction(project, false);
+    },
     mutate: async (
       token: string,
       resource: string,
