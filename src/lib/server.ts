@@ -349,32 +349,39 @@ export function createService(
   async function save(
     db: DB,
     client?: import('@prisma/client').Prisma.TransactionClient,
+    previous?: DB,
   ) {
     if (process.env.DATABASE_URL) {
       const pg = client || (await database());
-      await pg.household.deleteMany({
-        where: { id: { notIn: db.households.map((h) => h.id) } },
-      });
-      await pg.user.deleteMany({
-        where: { id: { notIn: db.users.map((u) => u.id) } },
-      });
-      await pg.session.deleteMany({
-        where: { hash: { notIn: db.sessions.map((s) => s.hash) } },
-      });
+      const removed = <T,>(old: T[], current: T[], key: (item: T) => string) => {
+        const ids = new Set(current.map(key));
+        return old.map(key).filter((id) => !ids.has(id));
+      };
+      const changed = <T,>(current: T[], old: T[], key: (item: T) => string) => {
+        const prior = new Map(old.map((item) => [key(item), JSON.stringify(item)]));
+        return current.filter((item) => prior.get(key(item)) !== JSON.stringify(item));
+      };
+      const deletedHouses = removed(previous?.households || [], db.households, (h) => h.id);
+      const deletedUsers = removed(previous?.users || [], db.users, (u) => u.id);
+      const deletedSessions = removed(previous?.sessions || [], db.sessions, (s) => s.hash);
+      if (deletedHouses.length) await pg.household.deleteMany({ where: { id: { in: deletedHouses } } });
+      if (deletedUsers.length) await pg.user.deleteMany({ where: { id: { in: deletedUsers } } });
+      if (deletedSessions.length) await pg.session.deleteMany({ where: { hash: { in: deletedSessions } } });
       const rows = db.households.flatMap((h) =>
         kinds.flatMap((kind) =>
           h[kind].map((row) => ({ row, kind, householdId: h.id })),
         ),
       );
-      for (const kind of kinds)
-        await resourceTables(pg)[kind].deleteMany({
-          where: {
-            id: {
-              notIn: rows.filter((r) => r.kind === kind).map((r) => r.row.id),
-            },
-          },
-        });
-      const houses = await Promise.all(db.households.map(async (h) => ({
+      const oldRows = (previous?.households || []).flatMap((h) =>
+        kinds.flatMap((kind) => h[kind].map((row) => ({ row, kind, householdId: h.id }))),
+      );
+      for (const kind of kinds) {
+        const deleted = removed(oldRows.filter((r) => r.kind === kind), rows.filter((r) => r.kind === kind), (r) => r.row.id);
+        if (deleted.length) await resourceTables(pg)[kind].deleteMany({ where: { id: { in: deleted } } });
+      }
+      const houseProfiles = db.households.map((h) => ({ id: h.id, profile: h.profile }));
+      const oldProfiles = (previous?.households || []).map((h) => ({ id: h.id, profile: h.profile }));
+      const houses = await Promise.all(changed(houseProfiles, oldProfiles, (h) => h.id).map(async (h) => ({
         id: h.id,
         ciphertext: (await encrypt(JSON.stringify(h.profile))).toString('base64'),
       })));
@@ -383,7 +390,7 @@ export function createService(
         SELECT id, ciphertext FROM jsonb_to_recordset(${JSON.stringify(houses)}::jsonb)
           AS x(id text, ciphertext text)
         ON CONFLICT (id) DO UPDATE SET ciphertext = EXCLUDED.ciphertext`;
-      const users = await Promise.all(db.users.map(async (u) => ({
+      const users = await Promise.all(changed(db.users, previous?.users || [], (u) => u.id).map(async (u) => ({
         id: u.id, householdId: u.household,
         ciphertext: (await encrypt(JSON.stringify(u))).toString('base64'),
       })));
@@ -392,7 +399,7 @@ export function createService(
         SELECT id, "householdId", ciphertext FROM jsonb_to_recordset(${JSON.stringify(users)}::jsonb)
           AS x(id text, "householdId" text, ciphertext text)
         ON CONFLICT (id) DO UPDATE SET "householdId" = EXCLUDED."householdId", ciphertext = EXCLUDED.ciphertext`;
-      const sessions = db.sessions.map((s) => ({ ...s, expires: new Date(s.expires).toISOString() }));
+      const sessions = changed(db.sessions, previous?.sessions || [], (s) => s.hash).map((s) => ({ ...s, expires: new Date(s.expires).toISOString() }));
       if (sessions.length) await pg.$executeRaw`
         INSERT INTO "Session" (hash, "userId", expires)
         SELECT hash, "userId", expires FROM jsonb_to_recordset(${JSON.stringify(sessions)}::jsonb)
@@ -404,7 +411,7 @@ export function createService(
         tasks: 'ChecklistTask', activities: 'AuditActivity',
       } as const;
       for (const kind of kinds) {
-        const batch = await Promise.all(rows.filter((r) => r.kind === kind).map(async ({row, householdId}) => ({
+        const batch = await Promise.all(changed(rows.filter((r) => r.kind === kind), oldRows.filter((r) => r.kind === kind), (r) => r.row.id).map(async ({row, householdId}) => ({
           id: row.id, householdId,
           ciphertext: (await encrypt(JSON.stringify(row))).toString('base64'),
         })));
@@ -445,11 +452,12 @@ export function createService(
               await client.$executeRaw`SELECT pg_advisory_xact_lock(734922601)`;
               stage = 'load';
               const db = await load(client);
+              const previous = write ? structuredClone(db) : undefined;
               stage = 'process';
               const result = await fn(db);
               if (write) {
                 stage = 'save';
-                await save(db, client);
+                await save(db, client, previous);
               }
               stage = 'commit';
               return result;
@@ -481,11 +489,7 @@ export function createService(
     queue = job.catch(() => {});
     return job;
   }
-  function identify(db: DB, token: string) {
-    const session = db.sessions.find(
-      (s) => s.hash === digest(token) && s.expires > Date.now(),
-    );
-    const user = db.users.find((u) => u.id === session?.userId);
+  function validateSessionUser(user: User | undefined) {
     if (!user) throw new ApiError(401, 'กรุณาเข้าสู่ระบบ');
     if (user.demo && user.createdAt && user.createdAt < Date.now() - 86400000)
       throw new ApiError(401, 'พื้นที่ทดลองหมดอายุ กรุณาเริ่มใหม่');
@@ -498,6 +502,13 @@ export function createService(
         503,
         'บัญชีครอบครัวจริงยังไม่เปิดใช้งานจนกว่าจะตั้งค่าการยืนยันตัวตนและอีเมล',
       );
+    return user;
+  }
+  function identify(db: DB, token: string) {
+    const session = db.sessions.find(
+      (s) => s.hash === digest(token) && s.expires > Date.now(),
+    );
+    const user = validateSessionUser(db.users.find((u) => u.id === session?.userId));
     const home = db.households.find((h) => h.id === user.household)!;
     return { user, home };
   }
@@ -789,11 +800,24 @@ export function createService(
         db.sessions = db.sessions.filter((s) => s.hash !== digest(token));
         return { ok: true };
       }),
-    session: async (token: string) =>
-      transaction((db) => {
+    session: async (token: string) => {
+      if (process.env.DATABASE_URL) {
+        const session = await (await database()).session.findUnique({
+          where: { hash: digest(token) },
+          include: { user: true },
+        });
+        if (!session || session.expires.getTime() <= Date.now())
+          throw new ApiError(401, 'กรุณาเข้าสู่ระบบ');
+        const user = validateSessionUser(
+          JSON.parse(await decrypt(Buffer.from(session.user.ciphertext, 'base64'))) as User,
+        );
+        return { id: user.id, role: user.role, demo: user.demo };
+      }
+      return transaction((db) => {
         const { user } = identify(db, token);
         return { id: user.id, role: user.role, demo: user.demo };
-      }, false),
+      }, false);
+    },
     state: async (token: string) =>
       transaction((db) => {
         const { user, home } = identify(db, token);

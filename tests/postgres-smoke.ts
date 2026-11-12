@@ -7,12 +7,19 @@ async function main() {
   const first = createService(),
     reloaded = createService();
   try {
+    const email = `postgres-smoke-${Date.now()}@example.test`;
+    const registered = await first.auth({ action: 'register', role: 'OWNER', name: 'Test', email, password: 'test-password-123', consent: true });
+    const loggedIn = await reloaded.auth({ action: 'login', email, password: 'test-password-123' });
+    assert.equal((await first.session(loggedIn.token)).id, registered.user.id);
     const owner = await first.auth({ action: 'demo', role: 'OWNER' });
+    assert.equal((await reloaded.session(owner.token)).role, 'OWNER');
+    await assert.rejects(reloaded.session('invalid-token'));
     const other = await first.auth({ action: 'demo', role: 'OWNER' });
     const family = await first.auth(
       { action: 'demo', role: 'FAMILY' },
       owner.household,
     );
+    assert.equal((await reloaded.session(family.token)).role, 'FAMILY');
     const asset = await first.mutate(owner.token, 'assets', 'POST', {
       name: 'PostgreSQL persistence check',
       category: 'other',
@@ -48,7 +55,7 @@ async function main() {
       notes: 'PostgreSQL persisted',
     });
     assert.equal(
-      (await reloaded.state(family.token)).tasks[0].status,
+      (await reloaded.state(family.token)).tasks.find((item) => item.id === task.id)?.status,
       'completed',
     );
     const doc = (await first.state(owner.token)).documents[0];
@@ -60,7 +67,9 @@ async function main() {
     );
     await assert.rejects(first.download(family.token, doc.id));
     await first.deleteAccount(owner.token);
+    await assert.rejects(reloaded.session(owner.token));
     await first.deleteAccount(other.token);
+    await first.deleteAccount(loggedIn.token);
     await assert.rejects(reloaded.state(owner.token));
     console.log(
       'PostgreSQL smoke passed: encrypted persistence, ownership, family scopes, checklist, documents and deletion.',
