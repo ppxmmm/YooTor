@@ -203,7 +203,6 @@ export function createService(
   let queue: Promise<unknown> = Promise.resolve();
   let prisma: import('@prisma/client').PrismaClient | undefined;
   async function key() {
-    await mkdir(directory, { recursive: true, mode: 0o700 });
     if (process.env.DATA_ENCRYPTION_KEY) {
       const k = Buffer.from(process.env.DATA_ENCRYPTION_KEY, 'hex');
       if (
@@ -215,6 +214,7 @@ export function createService(
     }
     if (process.env.NODE_ENV === 'production')
       throw new Error('Encryption key required');
+    await mkdir(directory, { recursive: true, mode: 0o700 });
     try {
       return await readFile(join(directory, 'encryption.key'));
     } catch {
@@ -418,6 +418,7 @@ export function createService(
       }
       return;
     }
+    await mkdir(directory, { recursive: true, mode: 0o700 });
     const bytes = await encrypt(JSON.stringify(db));
     const path = join(directory, 'vault.enc');
     await writeFile(path + '.tmp', bytes, { mode: 0o600 });
