@@ -1,5 +1,26 @@
 import { expect, test } from '@playwright/test';
 
+test('workspace navigation remains responsive while state refresh is delayed', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ทดลองใช้งานระบบ' }).click();
+  await expect(page.getByRole('button', { name: 'ทดลองมุมมองครอบครัว' })).toBeVisible();
+  let release!: () => void;
+  const waiting = new Promise<void>((resolve) => { release = resolve; });
+  await page.route('**/api/state', async (route) => {
+    await waiting;
+    await route.continue();
+  });
+  await page.getByRole('link', { name: 'ทรัพย์สินของฉัน' }).click();
+  await expect(page).toHaveURL(/\/app\/assets$/);
+  await expect(page.getByRole('heading', { name: 'ทรัพย์สินของฉัน' })).toBeVisible({ timeout: 1000 });
+  await page.goBack();
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goForward();
+  await expect(page.getByRole('heading', { name: 'ทรัพย์สินของฉัน' })).toBeVisible({ timeout: 1000 });
+  release();
+  await page.unrouteAll({ behavior: 'wait' });
+});
+
 test('navigation reflects a valid session and logout removes access', async ({ page }) => {
   await page.goto('/app/assets');
   await expect(page).toHaveURL(/\/login$/);

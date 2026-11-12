@@ -1,7 +1,7 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
   Layers,
@@ -42,21 +42,29 @@ const nav = [
   { id: 'checklist', name: navigationLabels.checklist, icon: ListChecks },
   { id: 'assistant', name: navigationLabels.assistant, icon: Sparkles },
 ];
-export function Workspace({ section, initialRole }: { section: string; initialRole: 'OWNER' | 'FAMILY' }) {
+export function Workspace({ section: initialSection, initialRole }: { section: string; initialRole: 'OWNER' | 'FAMILY' }) {
   const router = useRouter();
+  const refreshSequence = useRef(0);
+  const pathname = usePathname();
+  const section = pathname === '/app' || pathname === '/app/'
+    ? 'dashboard'
+    : pathname?.startsWith('/app/') ? pathname.slice('/app/'.length) : initialSection;
   const [state, setState] = useState<any>(null),
     [error, setError] = useState(''),
     [mobile, setMobile] = useState(false),
     [toast, setToast] = useState(''),
     [switching, setSwitching] = useState(false);
   const refresh = useCallback(async () => {
+    const sequence = ++refreshSequence.current;
     const response = await fetch('/api/state', { cache: 'no-store' });
+    if (sequence !== refreshSequence.current) return;
     if (response.status === 401) {
       setState(null);
       router.replace('/login');
       return;
     }
     const body = await response.json();
+    if (sequence !== refreshSequence.current) return;
     if (!response.ok) throw new Error(body.error || 'ไม่สามารถโหลดข้อมูลได้');
     setState(body);
   }, [router]);
@@ -110,6 +118,20 @@ export function Workspace({ section, initialRole }: { section: string; initialRo
     }
   }
   const family = (state?.user.role ?? initialRole) === 'FAMILY';
+  function navigateWorkspace(event: MouseEvent<HTMLDivElement>) {
+    if (!state || error || event.defaultPrevented || event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+        !(event.target instanceof Element)) return;
+    const anchor = event.target.closest('a');
+    if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
+    const url = new URL(anchor.href, window.location.href);
+    if (url.origin !== window.location.origin) return;
+    const match = url.pathname.match(/^\/app(?:\/(assets|contacts|documents|instructions|family|checklist|assistant|tax|settings))?\/?$/);
+    if (!match || (family && !['family', 'checklist', 'assistant', 'tax', 'settings'].includes(match[1] || 'dashboard'))) return;
+    event.preventDefault();
+    window.history.pushState(null, '', url.pathname + url.search + url.hash);
+    void refresh().catch((e) => setError(e.message));
+  }
   const current = nav.find((n) => n.id === section);
   const visible = family
     ? nav.filter((n) =>
@@ -117,7 +139,7 @@ export function Workspace({ section, initialRole }: { section: string; initialRo
       )
     : nav;
   return (
-    <div className="app-shell">
+    <div className="app-shell" onClickCapture={navigateWorkspace}>
       {mobile && (
         <button
           className="sidebar-backdrop"
